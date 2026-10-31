@@ -204,6 +204,8 @@ class Source
             'planCheck' => $hit ? $spaced($hit['planNumber']) . ' (' . $hit['turnNumRange'] . ')' : '',
             'playResult' => $hit ? Util::str($hit['openNum']) : '',
             'planStatus' => $hit ? self::vnlpStatus($hit['winStatus'], $hit['currentTurnSort']) : '',
+            'hitStatus' => $hit ? (string) $hit['winStatus'] : '',
+            'hitTurn' => $hit ? (string) $hit['currentTurnSort'] : '',
             // Dữ liệu kế hoạch đã khớp với kỳ vừa mở và kỳ tiếp theo
             'planReady' => $hit !== null && $nextReady,
         ] + self::streak($rows, $hit);

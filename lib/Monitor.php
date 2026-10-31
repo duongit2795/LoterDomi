@@ -86,6 +86,7 @@ class Monitor
                     if (!empty($s['planReady']) || Util::nowMs() - $s['pendingSince'] >= self::PLAN_WAIT_MS) {
                         $s['notifiedIssue'] = $s['issue'];
                         unset($s['pendingIssue'], $s['pendingSince']);
+                        History::record($game, $s);
                         if ($cfg['monitor']['notifyResult']) {
                             $text = self::message('result', $game, $s);
                             if ($cfg['monitor']['combineNext']) {

@@ -31,6 +31,7 @@ document.querySelectorAll('#tabs button').forEach((b) => b.onclick = () => {
   document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('active', x === b));
   document.querySelectorAll('[data-page]').forEach((p) => p.classList.toggle('hidden', p.dataset.page !== b.dataset.tab));
   if (b.dataset.tab === 'update') loadUpdate();
+  if (b.dataset.tab === 'members') loadMembersTab();
 });
 
 async function boot() {
@@ -236,6 +237,82 @@ async function changePassword() {
     await api('change-password', { current: $('pw-cur').value, new: $('pw-new').value });
     $('pw-cur').value = $('pw-new').value = '';
     toast('Đã đổi mật khẩu');
+  });
+}
+
+// ---- Thành viên ----
+const MB_STATUS = { active: ['Hoạt động', 'b-ok'], pending: ['Chờ duyệt', 'b-warn'], locked: ['Bị khoá', 'b-err'] };
+const fmtDate = (d) => d ? new Date(d.replace(' ', 'T')).toLocaleString('vi-VN') : '';
+
+async function loadMembersTab() {
+  const d = cfg.db;
+  $('db-host').value = d.host; $('db-port').value = d.port; $('db-name').value = d.name; $('db-user').value = d.user;
+  $('db-pass').value = ''; $('db-pass').placeholder = d.hasPass ? '(đã lưu – để trống để giữ nguyên)' : '';
+  $('mb-register').checked = cfg.members.allowRegister; $('mb-approval').checked = cfg.members.requireApproval;
+  const st = await api('db-status').catch((e) => ({ configured: true, ok: false, error: e.message }));
+  $('db-status').innerHTML = !st.configured ? '<span class="badge b-off">Chưa cấu hình</span>'
+    : st.ok ? `<span class="badge b-ok">Đã kết nối</span> ${st.members} thành viên · ${st.draws} kỳ đã lưu`
+    : `<span class="badge b-err">Lỗi</span> ${esc(st.error)}`;
+  if (st.configured && st.ok) loadMembers(1);
+}
+
+async function saveDb(btn) {
+  await run(btn, async () => {
+    const r = await api('db-save', { host: $('db-host').value.trim(), port: +$('db-port').value || 3306, name: $('db-name').value.trim(), user: $('db-user').value.trim(), pass: $('db-pass').value });
+    cfg = await api('config');
+    toast(r.message); loadMembersTab();
+  });
+}
+
+async function saveMemberCfg() {
+  await run(null, async () => {
+    cfg = await api('save', { members: { allowRegister: $('mb-register').checked, requireApproval: $('mb-approval').checked } });
+    toast('Đã lưu');
+  });
+}
+
+let mbPage = 1;
+async function loadMembers(page) {
+  mbPage = page || mbPage;
+  await run(null, async () => {
+    const r = await api(`members&q=${encodeURIComponent($('mb-q').value.trim())}&status=${$('mb-status').value}&page=${mbPage}`);
+    $('mb-counts').textContent = Object.entries(r.counts).map(([k, v]) => `${(MB_STATUS[k] || [k])[0]}: ${v}`).join(' · ');
+    $('mb-rows').innerHTML = r.rows.map((m) => {
+      const [label, cls] = MB_STATUS[m.status] || [m.status, 'b-off'];
+      const acts = [];
+      if (m.status !== 'active') acts.push(`<button class="btn sec" onclick="setMemberStatus(${m.id}, 'active')">${m.status === 'pending' ? 'Duyệt' : 'Mở khoá'}</button>`);
+      if (m.status !== 'locked') acts.push(`<button class="btn sec" onclick="setMemberStatus(${m.id}, 'locked')">Khoá</button>`);
+      acts.push(`<button class="btn sec" onclick="resetMemberPw(${m.id}, '${esc(m.username)}')">Đổi MK</button>`);
+      acts.push(`<button class="btn danger" onclick="deleteMember(${m.id}, '${esc(m.username)}')">Xoá</button>`);
+      return `<tr><td>${m.id}</td><td><b>${esc(m.username)}</b></td><td>${esc(m.display_name)}</td><td><span class="badge ${cls}">${label}</span></td>
+        <td class="muted">${fmtDate(m.created_at)}</td><td class="muted">${fmtDate(m.last_login_at)}<br>${esc(m.last_login_ip)}</td>
+        <td><div class="row" style="margin:0;gap:4px">${acts.join('')}</div></td></tr>`;
+    }).join('') || '<tr><td colspan="7" class="muted">Không có thành viên.</td></tr>';
+    const pages = Math.ceil(r.total / r.perPage);
+    $('mb-pager').innerHTML = pages > 1 ? Array.from({ length: pages }, (_, i) => `<button class="btn ${i + 1 === r.page ? '' : 'sec'}" onclick="loadMembers(${i + 1})">${i + 1}</button>`).join('') : '';
+  });
+}
+
+async function setMemberStatus(id, status) {
+  await run(null, async () => { await api('member-update', { id, status }); loadMembers(); });
+}
+
+async function resetMemberPw(id, name) {
+  const pw = prompt(`Mật khẩu mới cho ${name} (tối thiểu 6 ký tự):`);
+  if (!pw) return;
+  await run(null, async () => { await api('member-password', { id, password: pw }); toast('Đã đổi mật khẩu'); });
+}
+
+async function deleteMember(id, name) {
+  if (!confirm(`Xoá thành viên ${name}?`)) return;
+  await run(null, async () => { await api('member-delete', { id }); loadMembers(); });
+}
+
+async function createMember(btn) {
+  await run(btn, async () => {
+    await api('member-create', { username: $('nm-user').value.trim(), password: $('nm-pass').value, display_name: $('nm-name').value.trim() });
+    $('nm-user').value = $('nm-pass').value = $('nm-name').value = '';
+    toast('Đã thêm thành viên'); loadMembers(1);
   });
 }
 

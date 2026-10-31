@@ -16,6 +16,7 @@ $checks = [
     ['Extension json', extension_loaded('json'), '', true],
     ['Extension mbstring', extension_loaded('mbstring'), '', true],
     ['Extension zip (cho Cập nhật)', class_exists('ZipArchive'), '', false],
+    ['Extension pdo_mysql (cho thành viên)', extension_loaded('pdo_mysql'), '', false],
     ['Thư mục data/ ghi được', is_writable(DATA_DIR), DATA_DIR, true],
     ['Thư mục code ghi được (cho Cập nhật)', is_writable(APP_DIR), APP_DIR, false],
 ];
@@ -63,6 +64,20 @@ if (!$installed && $canInstall && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Token Telegram không hợp lệ: ' . $e->getMessage();
         }
     }
+    $db = [
+        'host' => trim((string) ($_POST['db_host'] ?? '')) ?: '127.0.0.1',
+        'port' => (int) ($_POST['db_port'] ?? 3306) ?: 3306,
+        'name' => trim((string) ($_POST['db_name'] ?? '')),
+        'user' => trim((string) ($_POST['db_user'] ?? '')),
+        'pass' => (string) ($_POST['db_pass'] ?? ''),
+    ];
+    if (!$errors && $db['name'] !== '') {
+        try {
+            Db::migrate(Db::connect($db));
+        } catch (Exception $e) {
+            $errors[] = 'Không kết nối được database: ' . $e->getMessage();
+        }
+    }
     if (!$errors) {
         $games = [];
         if (!empty($_POST['import'])) {
@@ -90,6 +105,7 @@ if (!$installed && $canInstall && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 'token' => trim((string) ($_POST['ghtoken'] ?? '')),
             ],
             'games' => $games,
+            'db' => $db['name'] !== '' ? $db : ['name' => '', 'user' => '', 'pass' => ''],
         ]);
         // Ghi nhận phiên bản hiện tại (nếu kết nối được GitHub)
         try {
@@ -178,7 +194,17 @@ $cfg = is_installed() ? Config::get(true) : null;
     <label class="check"><input type="checkbox" name="import" value="1" checked> Nhập toàn bộ game từ vnlotteryplan.com</label>
     <label class="check"><input type="checkbox" name="enable" value="1" checked> Bật theo dõi & gửi thông báo ngay</label>
 
-    <h2 style="margin-top:20px">5. Cập nhật từ GitHub</h2>
+    <h2 style="margin-top:20px">5. Database cho thành viên <span class="muted">(tuỳ chọn – có thể điền sau)</span></h2>
+    <p class="muted">MySQL tạo trong aaPanel → Databases. Dùng cho trang /member và lưu lịch sử kỳ.</p>
+    <div class="grid">
+      <div><label>Host</label><input name="db_host" value="<?= $h($_POST['db_host'] ?? '127.0.0.1') ?>"></div>
+      <div><label>Port</label><input name="db_port" value="<?= $h($_POST['db_port'] ?? '3306') ?>"></div>
+      <div><label>Tên database</label><input name="db_name" value="<?= $h($_POST['db_name'] ?? '') ?>"></div>
+      <div><label>User</label><input name="db_user" value="<?= $h($_POST['db_user'] ?? '') ?>"></div>
+      <div><label>Mật khẩu</label><input name="db_pass" type="password" autocomplete="new-password"></div>
+    </div>
+
+    <h2 style="margin-top:20px">6. Cập nhật từ GitHub</h2>
     <div class="grid">
       <div><label>Repo (owner/repo)</label><input name="repo" value="<?= $h($_POST['repo'] ?? 'duongit2795/loterdomi') ?>"></div>
       <div><label>Nhánh</label><input name="branch" value="<?= $h($_POST['branch'] ?? 'master') ?>"></div>

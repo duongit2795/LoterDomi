@@ -82,6 +82,18 @@ class Config
                 'branch' => 'master',
                 'token' => '',
             ],
+            // MySQL/MariaDB cho thành viên + lịch sử kỳ (để trống = không dùng)
+            'db' => [
+                'host' => '127.0.0.1',
+                'port' => 3306,
+                'name' => '',
+                'user' => '',
+                'pass' => '',
+            ],
+            'members' => [
+                'allowRegister' => true,
+                'requireApproval' => false,
+            ],
             'games' => [],
         ];
     }
@@ -140,6 +152,9 @@ class Config
     {
         $cfg = self::get(true);
         unset($cfg['admin'], $cfg['installed']);
+        // Không gửi mật khẩu DB ra trình duyệt
+        $cfg['db']['hasPass'] = $cfg['db']['pass'] !== '';
+        $cfg['db']['pass'] = '';
         return $cfg;
     }
 }

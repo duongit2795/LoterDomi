@@ -38,7 +38,7 @@ try {
             out(Config::publicView());
 
         case 'POST save':
-            unset($body['admin'], $body['installed'], $body['cronKey']);
+            unset($body['admin'], $body['installed'], $body['cronKey'], $body['db']);
             Config::update($body);
             Logger::info('Cấu hình đã được cập nhật');
             out(Config::publicView());
@@ -131,6 +131,62 @@ try {
             }
             Config::update(['admin' => ['passwordHash' => password_hash($body['new'], PASSWORD_DEFAULT)]]);
             Logger::info('Đã đổi mật khẩu admin');
+            out(['ok' => true]);
+
+        case 'POST db-save':
+            $db = [
+                'host' => trim((string) ($body['host'] ?? '')) ?: '127.0.0.1',
+                'port' => (int) ($body['port'] ?? 3306) ?: 3306,
+                'name' => trim((string) ($body['name'] ?? '')),
+                'user' => trim((string) ($body['user'] ?? '')),
+                'pass' => (string) ($body['pass'] ?? ''),
+            ];
+            if ($db['pass'] === '') {
+                $db['pass'] = Config::get(true)['db']['pass'];
+            }
+            if ($db['name'] === '') {
+                Config::update(['db' => ['name' => '', 'user' => '', 'pass' => '']]);
+                Logger::info('Đã tắt database');
+                out(['ok' => true, 'message' => 'Đã tắt database']);
+            }
+            // Thử kết nối + tạo bảng trước khi lưu
+            Db::migrate(Db::connect($db));
+            Config::update(['db' => $db]);
+            Db::reset();
+            Logger::info("Đã kết nối database {$db['name']}@{$db['host']}");
+            out(['ok' => true, 'message' => 'Kết nối OK, đã tạo/kiểm tra bảng']);
+
+        case 'GET db-status':
+            if (!Db::configured()) {
+                out(['configured' => false]);
+            }
+            try {
+                $members = (int) Db::one('SELECT COUNT(*) c FROM members')['c'];
+                $draws = (int) Db::one('SELECT COUNT(*) c FROM draws')['c'];
+                out(['configured' => true, 'ok' => true, 'members' => $members, 'draws' => $draws]);
+            } catch (Exception $e) {
+                out(['configured' => true, 'ok' => false, 'error' => $e->getMessage()]);
+            }
+
+        case 'GET members':
+            out(Member::search(trim((string) ($_GET['q'] ?? '')), (string) ($_GET['status'] ?? ''), (int) ($_GET['page'] ?? 1)));
+
+        case 'POST member-create':
+            Member::register((string) ($body['username'] ?? ''), (string) ($body['password'] ?? ''), (string) ($body['display_name'] ?? ''), true);
+            out(['ok' => true]);
+
+        case 'POST member-update':
+            Member::update((int) ($body['id'] ?? 0), array_intersect_key($body, ['status' => 1, 'note' => 1, 'display_name' => 1]));
+            out(['ok' => true]);
+
+        case 'POST member-password':
+            Member::setPassword((int) ($body['id'] ?? 0), (string) ($body['password'] ?? ''));
+            Logger::info('Admin đặt lại mật khẩu thành viên #' . (int) ($body['id'] ?? 0));
+            out(['ok' => true]);
+
+        case 'POST member-delete':
+            Member::delete((int) ($body['id'] ?? 0));
+            Logger::info('Admin xoá thành viên #' . (int) ($body['id'] ?? 0));
             out(['ok' => true]);
 
         case 'GET update-check':

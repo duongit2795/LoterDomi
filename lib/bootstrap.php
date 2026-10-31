@@ -21,6 +21,9 @@ require __DIR__ . '/Monitor.php';
 require __DIR__ . '/Bot.php';
 require __DIR__ . '/Updater.php';
 require __DIR__ . '/Auth.php';
+require __DIR__ . '/Db.php';
+require __DIR__ . '/History.php';
+require __DIR__ . '/Member.php';
 
 function is_installed()
 {

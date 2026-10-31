@@ -77,6 +77,23 @@ Kỳ 31/10/2026-0479: 0,5,8,0,1,1 → dàn 1 3 7 8 9 (0478-0480) về 1 ✅ Trú
 Gán nơi nhận: vào chủ đề (vd chủ đề 461) gõ `/bind chuỗi`, hoặc nhập `chat_id:461` trong admin → Cài đặt → Báo chuỗi.
 Ngưỡng thắng / thua chỉnh riêng (0 = tắt). Bot đếm trên 30 dàn gần nhất; nếu cả 30 cùng một chuỗi sẽ hiện dạng `29+`.
 
+## Thành viên (/member)
+
+Trang `https://<domain>/member/` cho thành viên: đăng ký / đăng nhập, **Bảng kỳ** (kỳ vừa mở, dàn vừa đối chiếu,
+kế hoạch kỳ tiếp, đếm ngược, chuỗi thắng/thua – tự cập nhật), **Lịch sử** từng game kèm thống kê trúng kỳ 1 / trúng muộn / trượt,
+và đổi mật khẩu.
+
+Cần MySQL/MariaDB:
+1. aaPanel → **Databases** → Add database (tên + user + mật khẩu).
+2. Admin → tab **Thành viên** → mục Database: nhập host `127.0.0.1`, tên DB, user, mật khẩu → **Kết nối & lưu**
+   (bảng `members`, `draws` tự tạo). Hoặc điền luôn ở bước 5 của `install.php`.
+3. Bật extension **pdo_mysql** cho PHP nếu thiếu.
+
+Mật khẩu database chỉ lưu trong `data/config.php` trên server (không đưa lên GitHub, không gửi ra trình duyệt).
+
+Tab **Thành viên** trong admin: bật/tắt tự đăng ký, bắt buộc duyệt tài khoản mới, tìm kiếm, duyệt / khoá / mở khoá,
+đặt lại mật khẩu, xoá, thêm thành viên thủ công. Lịch sử kỳ được lưu vào bảng `draws` từ lúc bật database.
+
 ## Mẫu tin nhắn
 
 Biến: `{game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}`.
@@ -103,6 +120,7 @@ admin.php        trang quản trị (đăng nhập)
 api.php          API JSON cho trang quản trị
 worker.php       tiến trình nền: gọi API, gửi thông báo, nhận lệnh bot
 lib/             mã nguồn (Config, Source, Monitor, Bot, Telegram, Updater...)
+member/          trang thành viên (đăng ký, đăng nhập, bảng kỳ, lịch sử)
 assets/          CSS/JS giao diện
 data/            cấu hình, trạng thái, log, bản sao lưu (không đưa lên git)
 ```

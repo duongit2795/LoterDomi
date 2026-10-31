@@ -40,6 +40,7 @@ $logged = Auth::check();
     <button data-tab="games">Nguồn API</button>
     <button data-tab="tele">Telegram</button>
     <button data-tab="settings">Cài đặt</button>
+    <button data-tab="members">Thành viên</button>
     <button data-tab="update">Cập nhật</button>
     <button data-tab="logs">Nhật ký</button>
   </nav>
@@ -179,6 +180,56 @@ $logged = Auth::check();
         <div><label>Mật khẩu mới</label><input id="pw-new" type="password"></div>
       </div>
       <div class="row"><button class="btn" onclick="changePassword()">Đổi mật khẩu</button></div>
+    </div>
+  </section>
+
+  <!-- Thành viên -->
+  <section data-page="members" class="hidden">
+    <div class="card">
+      <h2>Database (MySQL/MariaDB)</h2>
+      <p class="muted">Dùng cho thành viên và lịch sử kỳ. Tạo database trong aaPanel → Databases. Bảng sẽ được tạo tự động.
+        <span id="db-status"></span></p>
+      <div class="grid">
+        <div><label>Host</label><input id="db-host" placeholder="127.0.0.1"></div>
+        <div><label>Port</label><input id="db-port" type="number" placeholder="3306"></div>
+        <div><label>Tên database</label><input id="db-name"></div>
+        <div><label>User</label><input id="db-user"></div>
+        <div><label>Mật khẩu</label><input id="db-pass" type="password" autocomplete="new-password"></div>
+      </div>
+      <div class="row"><button class="btn" onclick="saveDb(this)">Kết nối & lưu</button></div>
+    </div>
+    <div class="card">
+      <h2>Đăng ký</h2>
+      <p class="muted">Trang thành viên: <a id="member-link" href="member/" target="_blank">member/</a></p>
+      <label class="check"><input type="checkbox" id="mb-register"> Cho phép tự đăng ký</label>
+      <label class="check"><input type="checkbox" id="mb-approval"> Tài khoản mới cần admin duyệt</label>
+      <div class="row"><button class="btn" onclick="saveMemberCfg()">Lưu</button></div>
+    </div>
+    <div class="card">
+      <h2>Danh sách thành viên <span class="muted" id="mb-counts"></span></h2>
+      <div class="row" style="margin-top:0">
+        <input id="mb-q" placeholder="Tìm tên đăng nhập / tên hiển thị" style="max-width:280px" onkeydown="event.key==='Enter'&&loadMembers(1)">
+        <select id="mb-status" style="max-width:160px" onchange="loadMembers(1)">
+          <option value="">Tất cả</option><option value="active">Hoạt động</option><option value="pending">Chờ duyệt</option><option value="locked">Bị khoá</option>
+        </select>
+        <button class="btn sec" onclick="loadMembers(1)">Tìm</button>
+      </div>
+      <div style="overflow-x:auto;margin-top:12px">
+        <table>
+          <thead><tr><th>#</th><th>Tên đăng nhập</th><th>Tên hiển thị</th><th>Trạng thái</th><th>Ngày tạo</th><th>Đăng nhập gần nhất</th><th></th></tr></thead>
+          <tbody id="mb-rows"></tbody>
+        </table>
+      </div>
+      <div class="row" id="mb-pager"></div>
+    </div>
+    <div class="card">
+      <h2>Thêm thành viên</h2>
+      <div class="grid">
+        <div><label>Tên đăng nhập</label><input id="nm-user"></div>
+        <div><label>Mật khẩu</label><input id="nm-pass" type="password" autocomplete="new-password"></div>
+        <div><label>Tên hiển thị</label><input id="nm-name"></div>
+      </div>
+      <div class="row"><button class="btn" onclick="createMember(this)">Thêm</button></div>
     </div>
   </section>
 
