@@ -24,6 +24,8 @@ class Monitor
             'nextTime' => Util::formatTime($next, $tz),
             'countdown' => $next ? Util::formatCountdown($next - $nowMs) : '',
             'now' => Util::formatTime($nowMs, $tz),
+            'streakText' => isset($s['streakType']) ? ($s['streakType'] === 'win' ? 'THẮNG' : ($s['streakType'] === 'lose' ? 'THUA' : '')) : '',
+            'streakIcon' => isset($s['streakType']) ? ($s['streakType'] === 'win' ? '🔥' : ($s['streakType'] === 'lose' ? '🧊' : '')) : '',
         ]);
     }
 
@@ -95,12 +97,28 @@ class Monitor
                             $n = Telegram::broadcast($text, self::targets($game));
                             Logger::info("[{$game['name']}] báo kết quả kỳ {$s['issue']} → $n chat");
                         }
+                        $this->streakAlert($game, $s);
                     }
                 }
             }
             $this->state['games'][$id] = $s;
         }
         $this->save();
+    }
+
+    // Báo khi chuỗi thắng/thua liên tiếp đạt ngưỡng (từ ván thứ N trở đi, mỗi ván báo 1 lần)
+    private function streakAlert(array $game, array $s)
+    {
+        $cfg = Config::get()['monitor']['streak'];
+        if (!$cfg['enabled'] || !$cfg['targets'] || empty($s['streakNew']) || empty($s['streakType'])) {
+            return;
+        }
+        $min = (int) ($s['streakType'] === 'win' ? $cfg['winMin'] : $cfg['loseMin']);
+        if ($min <= 0 || $s['streakCount'] < $min) {
+            return;
+        }
+        $n = Telegram::broadcast(self::message('streak', $game, $s), $cfg['targets']);
+        Logger::info("[{$game['name']}] chuỗi {$s['streakType']} {$s['streakCount']} ván → $n chat");
     }
 
     public function remind()

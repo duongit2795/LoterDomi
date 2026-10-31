@@ -23,7 +23,7 @@ class Source
             'turnNumType' => $v['turnNumType'],
             'planNumberType' => $v['planNumberType'],
             'page' => 1,
-            'pageSize' => 5,
+            'pageSize' => 30, // đủ lịch sử để đếm chuỗi thắng/thua
             'gameId' => $v['gameId'],
             'play' => $v['play'],
             '_t' => Util::nowMs(),
@@ -206,6 +206,36 @@ class Source
             'planStatus' => $hit ? self::vnlpStatus($hit['winStatus'], $hit['currentTurnSort']) : '',
             // Dữ liệu kế hoạch đã khớp với kỳ vừa mở và kỳ tiếp theo
             'planReady' => $hit !== null && $nextReady,
+        ] + self::streak($rows, $hit);
+    }
+
+    // Chuỗi thắng/thua liên tiếp của các dàn đã kết thúc (mới nhất trước).
+    // streakNew = kỳ vừa mở làm kết thúc một dàn (chuỗi vừa thay đổi).
+    private static function streak(array $rows, $hit)
+    {
+        $type = null;
+        $count = 0;
+        foreach ($rows as $r) {
+            $ws = isset($r['winStatus']) ? (int) $r['winStatus'] : 2;
+            if ($ws === 2) {
+                continue;
+            }
+            if ($type === null) {
+                $type = $ws;
+            } elseif ($ws !== $type) {
+                break;
+            }
+            $count++;
+        }
+        $completed = count(array_filter($rows, function ($r) {
+            return isset($r['winStatus']) && (int) $r['winStatus'] !== 2;
+        }));
+        return [
+            'streakType' => $type === null ? '' : ($type === 1 ? 'win' : 'lose'),
+            'streakCount' => $count,
+            // Cả lịch sử tải về đều cùng một chuỗi: thực tế có thể dài hơn
+            'streakLabel' => $count && $count === $completed ? "$count+" : (string) $count,
+            'streakNew' => $hit !== null && in_array((int) $hit['winStatus'], [0, 1], true),
         ];
     }
 }

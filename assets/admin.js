@@ -47,6 +47,9 @@ function fill() {
   $('m-enabled').checked = m.enabled; $('m-interval').value = m.intervalSeconds; $('m-remind').value = m.remindBeforeSeconds;
   $('m-timeout').value = m.requestTimeoutSeconds; $('m-tz').value = cfg.timezone;
   $('m-result').checked = m.notifyResult; $('m-upcoming').checked = m.notifyUpcoming; $('m-combine').checked = m.combineNext;
+  const st = m.streak;
+  $('st-enabled').checked = st.enabled; $('st-win').value = st.winMin; $('st-lose').value = st.loseMin; $('st-targets').value = st.targets.join(', ');
+  $('tpl-streak').value = cfg.templates.streak;
   $('tpl-result').value = cfg.templates.result; $('tpl-upcoming').value = cfg.templates.upcoming; $('tpl-next').value = cfg.templates.next;
   $('g-headers').value = JSON.stringify(cfg.globalHeaders, null, 2);
   $('u-repo').value = cfg.update.repo; $('u-branch').value = cfg.update.branch; $('u-token').value = cfg.update.token;
@@ -202,9 +205,13 @@ async function saveSettings(silent) {
         enabled: $('m-enabled').checked, intervalSeconds: +$('m-interval').value || 5,
         remindBeforeSeconds: +$('m-remind').value || 0, requestTimeoutSeconds: +$('m-timeout').value || 15,
         notifyResult: $('m-result').checked, notifyUpcoming: $('m-upcoming').checked, combineNext: $('m-combine').checked,
+        streak: {
+          enabled: $('st-enabled').checked, winMin: +$('st-win').value || 0, loseMin: +$('st-lose').value || 0,
+          targets: $('st-targets').value.split(/[\s,]+/).filter(Boolean),
+        },
       },
       timezone: $('m-tz').value.trim() || 'Asia/Ho_Chi_Minh',
-      templates: { result: $('tpl-result').value, upcoming: $('tpl-upcoming').value, next: $('tpl-next').value },
+      templates: { result: $('tpl-result').value, upcoming: $('tpl-upcoming').value, next: $('tpl-next').value, streak: $('tpl-streak').value },
       globalHeaders: headers,
     });
     if (!silent) toast('Đã lưu');

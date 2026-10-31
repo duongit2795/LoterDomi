@@ -138,13 +138,27 @@ $logged = Auth::check();
       <label class="check"><input type="checkbox" id="m-upcoming"> Nhắc kỳ sắp mở bằng tin riêng (chỉ dùng khi không gộp)</label>
     </div>
     <div class="card">
+      <h2>Báo chuỗi thắng/thua liên tiếp</h2>
+      <p class="muted">Mỗi "ván" là một dàn kế hoạch đã kết thúc (✅ trúng / ❌ trượt). Khi chuỗi đạt ngưỡng, mỗi ván tiếp theo đều báo (vd ngưỡng 4: báo ở ván 4, 5, 6…).
+        Gán nhanh: vào chủ đề muốn nhận, gõ <code>/bind chuỗi</code>.</p>
+      <label class="check"><input type="checkbox" id="st-enabled"> Bật báo chuỗi</label>
+      <div class="grid">
+        <div><label>Thắng liên tiếp từ (ván) – 0 = tắt</label><input id="st-win" type="number" min="0"></div>
+        <div><label>Thua liên tiếp từ (ván) – 0 = tắt</label><input id="st-lose" type="number" min="0"></div>
+      </div>
+      <label>Gửi tới (chat_id:chủ_đề_id, cách nhau bởi dấu phẩy)</label>
+      <input id="st-targets" placeholder="vd: -1001234567890:461">
+    </div>
+    <div class="card">
       <h2>Mẫu tin nhắn</h2>
       <p class="muted">Biến: {game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}<br>
-        Riêng vnlotteryplan: {play} kiểu chơi, {plan} dàn kế hoạch kỳ tiếp, {planRange} khoảng kỳ, {planTurn} đang nuôi kỳ thứ mấy, {planCheck} dàn vừa đối chiếu, {playResult} số về, {planStatus} trúng/trượt/đang nuôi.<br>
+        Riêng vnlotteryplan: {play} kiểu chơi, {plan} dàn kế hoạch kỳ tiếp, {planRange} khoảng kỳ, {planTurn} đang nuôi kỳ thứ mấy, {planCheck} dàn vừa đối chiếu, {playResult} số về, {planStatus} trúng/trượt/đang nuôi, {streakIcon} {streakText} {streakLabel} chuỗi thắng/thua.<br>
         Dòng nào có biến mà tất cả đều rỗng sẽ tự bị bỏ.</p>
       <label>Báo kết quả</label><textarea id="tpl-result"></textarea>
       <button class="btn sec" onclick="preview('result')" style="margin-top:6px">Xem trước</button>
       <label>Phần kỳ tiếp (nối vào cuối tin kết quả khi bật gộp)</label><textarea id="tpl-next"></textarea>
+      <label>Báo chuỗi thắng/thua</label><textarea id="tpl-streak"></textarea>
+      <button class="btn sec" onclick="preview('streak')" style="margin-top:6px">Xem trước</button>
       <label>Nhắc kỳ sắp mở (tin riêng)</label><textarea id="tpl-upcoming"></textarea>
       <button class="btn sec" onclick="preview('upcoming')" style="margin-top:6px">Xem trước</button>
       <pre id="tpl-preview" class="hidden"></pre>

@@ -55,6 +55,13 @@ class Config
                 'notifyUpcoming' => true,
                 // Gửi kèm kế hoạch kỳ tiếp trong tin kết quả, không gửi tin nhắc riêng
                 'combineNext' => true,
+                // Báo chuỗi thắng/thua liên tiếp (vnlotteryplan) vào nơi nhận riêng
+                'streak' => [
+                    'enabled' => true,
+                    'winMin' => 4,      // 0 = không báo chuỗi thắng
+                    'loseMin' => 4,     // 0 = không báo chuỗi thua
+                    'targets' => [],    // vd "-1001234567890:461"; rỗng = không gửi
+                ],
                 'remindBeforeSeconds' => 30,
                 'requestTimeoutSeconds' => 15,
             ],
@@ -64,6 +71,7 @@ class Config
             ],
             'templates' => [
                 'result' => "🎯 <b>{game}</b> – Kỳ <code>{issue}</code>\nKết quả: <b>{result}</b>\n📋 Dàn {planCheck}: về <b>{playResult}</b> → {planStatus}",
+                'streak' => "{streakIcon} <b>{game}</b> đang <b>{streakText} {streakLabel} ván</b> liên tiếp\nKỳ <code>{issue}</code>: {result} → dàn {planCheck} về <b>{playResult}</b> {planStatus}\n📋 Kế hoạch tiếp {play} {planRange}: <b>{plan}</b>",
                 'next' => "⏭ Kỳ tiếp <code>{nextIssue}</code> – {nextTime}\n📋 Kế hoạch {play} {planRange} (nuôi kỳ {planTurn}): <b>{plan}</b>",
                 'upcoming' => "⏰ <b>{game}</b>\nKỳ sắp mở: <code>{nextIssue}</code> – {nextTime} (còn {countdown})\n📋 Kế hoạch {play} {planRange} (nuôi kỳ {planTurn}): <b>{plan}</b>",
             ],
@@ -120,6 +128,7 @@ class Config
             $cfg['games'] = array_map([self::class, 'normalizeGame'], $partial['games']);
         }
         $cfg['telegram']['chatIds'] = self::cleanTargets($cfg['telegram']['chatIds']);
+        $cfg['monitor']['streak']['targets'] = self::cleanTargets($cfg['monitor']['streak']['targets']);
         Store::write('config', $cfg);
         self::$cache = $cfg;
         return $cfg;

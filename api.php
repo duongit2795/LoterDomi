@@ -98,7 +98,7 @@ try {
                 }
             }
             $s = Monitor::snapshot()['games'][$game['id']] ?? ['issue' => '31/10/2026-0001', 'result' => '1,2,3,4,5,6', 'nextIssue' => '31/10/2026-0002', 'nextTime' => Util::nowMs() + 60000];
-            $kind = ($body['kind'] ?? '') === 'upcoming' ? 'upcoming' : 'result';
+            $kind = in_array($body['kind'] ?? '', ['upcoming', 'streak'], true) ? $body['kind'] : 'result';
             $text = Monitor::message($kind, $game, $s);
             if ($kind === 'result' && Config::get()['monitor']['combineNext']) {
                 $next = Monitor::message('next', $game, $s);

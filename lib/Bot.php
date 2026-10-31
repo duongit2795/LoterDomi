@@ -2,7 +2,7 @@
 // Xử lý lệnh Telegram (getUpdates, không cần webhook/SSL)
 class Bot
 {
-    const HELP = "<b>LoterDomi bot</b>\n/next – các kỳ sắp mở + kế hoạch\n/last – kết quả kỳ gần nhất\n/bind tên game – gửi game đó vào chủ đề/chat này (admin nhóm)\n/unbind – bỏ gán các game khỏi chủ đề này\n/topics – xem game nào gửi đi đâu\n/subscribe – nhận thông báo tại chat này\n/unsubscribe – huỷ nhận thông báo\n/id – xem chat id, chủ đề id";
+    const HELP = "<b>LoterDomi bot</b>\n/next – các kỳ sắp mở + kế hoạch\n/last – kết quả kỳ gần nhất\n/bind tên game – gửi game đó vào chủ đề/chat này (admin nhóm)\n/bind chuỗi – nhận báo chuỗi thắng/thua liên tiếp tại chủ đề này\n/unbind – bỏ gán các game khỏi chủ đề này\n/topics – xem game nào gửi đi đâu\n/subscribe – nhận thông báo tại chat này\n/unsubscribe – huỷ nhận thông báo\n/id – xem chat id, chủ đề id";
 
     public static function nextText(array $states)
     {
@@ -153,7 +153,9 @@ class Bot
             case '/id':
                 return $reply("Chat id: <code>$chatId</code>" . ($thread ? "\nChủ đề id: <code>$thread</code>\nNơi nhận (dán vào admin): <code>$here</code>" : ''));
             case '/topics':
-                return $reply("📌 <b>Nơi gửi của từng game</b>\n" . (self::gameList($cfg['games']) ?: 'Chưa có game.'));
+                $st = $cfg['monitor']['streak'];
+                return $reply("📌 <b>Nơi gửi của từng game</b>\n" . (self::gameList($cfg['games']) ?: 'Chưa có game.')
+                    . "\n\n🔥 <b>Báo chuỗi</b> (thắng ≥ {$st['winMin']}, thua ≥ {$st['loseMin']}) → <code>" . Util::h($st['targets'] ? implode(', ', $st['targets']) : 'chưa gán') . '</code>');
             case '/bind':
             case '/unbind':
                 if (!self::isGroupAdmin($msg)) {
@@ -169,12 +171,26 @@ class Bot
                         }
                     }
                     unset($g);
-                    Config::update(['games' => $games]);
+                    $streakTargets = $cfg['monitor']['streak']['targets'];
+                    if (in_array($here, $streakTargets, true)) {
+                        $names[] = 'báo chuỗi';
+                    }
+                    Config::update(['games' => $games, 'monitor' => ['streak' => ['targets' => array_values(array_diff($streakTargets, [$here]))]]]);
                     Logger::info("Bỏ gán $here khỏi: " . implode(', ', $names));
                     return $reply($names ? 'Đã bỏ gán: ' . Util::h(implode(', ', $names)) : 'Chủ đề này chưa gán game nào.');
                 }
+                if (in_array(mb_strtolower($arg), ['chuỗi', 'chuoi', 'streak'], true)) {
+                    $targets = $cfg['monitor']['streak']['targets'];
+                    if (!in_array($here, $targets, true)) {
+                        $targets[] = $here;
+                    }
+                    Config::update(['monitor' => ['streak' => ['targets' => $targets, 'enabled' => true]]]);
+                    Logger::info("Gán báo chuỗi thắng/thua → $here");
+                    $st = $cfg['monitor']['streak'];
+                    return $reply('✅ Báo chuỗi thắng/thua sẽ gửi vào ' . ($thread ? 'chủ đề này' : 'chat này') . " (<code>$here</code>).\nNgưỡng: thắng từ {$st['winMin']} ván, thua từ {$st['loseMin']} ván (0 = tắt) – chỉnh trong admin → Cài đặt.");
+                }
                 if ($arg === '') {
-                    return $reply("Gõ <code>/bind tên game</code> hoặc <code>/bind số</code> ngay trong chủ đề muốn nhận tin:\n" . self::gameList($games));
+                    return $reply("Gõ <code>/bind tên game</code> hoặc <code>/bind số</code> ngay trong chủ đề muốn nhận tin (<code>/bind chuỗi</code> để nhận báo chuỗi thắng/thua):\n" . self::gameList($games));
                 }
                 $found = self::findGame($games, $arg);
                 if (count($found) !== 1) {

@@ -62,10 +62,24 @@ Admin → tab **Cập nhật** → **Kiểm tra cập nhật** → **Cập nhậ
   Game chưa gán sẽ gửi tới các chat chung ở tab Telegram.
 - Bot nhận lệnh bằng `getUpdates` nên không cần webhook hay SSL.
 
+## Báo chuỗi thắng/thua liên tiếp
+
+Mỗi "ván" là một dàn kế hoạch đã kết thúc (✅ trúng / ❌ trượt). Khi một game thắng hoặc thua liên tiếp đạt ngưỡng
+(mặc định **từ ván 4**), bot báo vào nơi nhận riêng, mỗi ván tiếp theo của chuỗi đều báo:
+
+```
+🔥 M.Nam Siêu Tốc 45s đang THẮNG 9 ván liên tiếp
+Kỳ 31/10/2026-0479: 0,5,8,0,1,1 → dàn 1 3 7 8 9 (0478-0480) về 1 ✅ Trúng kỳ 2
+📋 Kế hoạch tiếp Đuôi 0480-0482: 3 4 5 6 9
+```
+
+Gán nơi nhận: vào chủ đề (vd chủ đề 461) gõ `/bind chuỗi`, hoặc nhập `chat_id:461` trong admin → Cài đặt → Báo chuỗi.
+Ngưỡng thắng / thua chỉnh riêng (0 = tắt). Bot đếm trên 30 dàn gần nhất; nếu cả 30 cùng một chuỗi sẽ hiện dạng `29+`.
+
 ## Mẫu tin nhắn
 
 Biến: `{game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}`.
-Riêng vnlotteryplan có thêm: `{play} {plan} {planRange} {planTurn} {planCheck} {playResult} {planStatus}`.
+Riêng vnlotteryplan có thêm: `{play} {plan} {planRange} {planTurn} {planCheck} {playResult} {planStatus} {streakIcon} {streakText} {streakLabel}`.
 Dòng nào có biến mà tất cả đều rỗng sẽ tự bị bỏ.
 
 ## API vnlotteryplan.com
