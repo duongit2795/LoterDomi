@@ -114,7 +114,11 @@ $logged = Auth::check();
         <button class="btn sec" onclick="testSend()">Gửi tin thử</button>
         <span id="bot-info" class="muted"></span>
       </div>
-      <p class="muted">Lệnh bot: /next, /last, /subscribe, /unsubscribe, /id. Gửi vào nhóm/kênh: thêm bot vào nhóm (kênh: cấp quyền admin), gõ /id để lấy chat id.</p>
+      <p class="muted">Lệnh bot: /next, /last, /bind, /unbind, /topics, /subscribe, /unsubscribe, /id.</p>
+      <p class="muted"><b>Gửi theo chủ đề (topic) của nhóm:</b> thêm bot vào nhóm, cấp quyền admin, rồi vào từng chủ đề gõ
+        <code>/bind 1 phút</code> (hoặc <code>/bind 2</code> theo số thứ tự trong <code>/bind</code>). Game đó sẽ chỉ gửi vào chủ đề này.
+        Cũng có thể gõ <code>/id</code> trong chủ đề để lấy mã <code>chat_id:chủ_đề_id</code> rồi dán vào ô "Gửi tới" của game ở tab Nguồn API.
+        Game không gán chủ đề riêng sẽ gửi tới danh sách chat ở trên.</p>
     </div>
   </section>
 

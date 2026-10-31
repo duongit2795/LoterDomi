@@ -11,6 +11,8 @@ class Config
             'enabled' => true,
             // vnlp: nguồn có sẵn vnlotteryplan.com | custom: API tự cấu hình
             'type' => 'custom',
+            // Nơi nhận riêng của game ("chat_id" hoặc "chat_id:topic_id"); rỗng = gửi tới các chat chung
+            'targets' => [],
             'vnlp' => [
                 'gameId' => '',
                 'play' => 'DI',
@@ -85,9 +87,20 @@ class Config
             $game['headers'] = new stdClass();
         }
         $game['enabled'] = (bool) $game['enabled'];
+        $game['targets'] = self::cleanTargets($game['targets']);
         $game['vnlp']['turnNumType'] = (int) $game['vnlp']['turnNumType'] ?: 3;
         $game['vnlp']['planNumberType'] = (int) $game['vnlp']['planNumberType'] ?: 1;
         return $game;
+    }
+
+    public static function cleanTargets($list)
+    {
+        if (!is_array($list)) {
+            $list = preg_split('/[\s,]+/', (string) $list);
+        }
+        return array_values(array_unique(array_filter(array_map(function ($t) {
+            return trim((string) $t);
+        }, $list), 'strlen')));
     }
 
     public static function get($fresh = false)
@@ -106,7 +119,7 @@ class Config
         if (isset($partial['games'])) {
             $cfg['games'] = array_map([self::class, 'normalizeGame'], $partial['games']);
         }
-        $cfg['telegram']['chatIds'] = array_values(array_unique(array_filter(array_map('strval', $cfg['telegram']['chatIds']), 'strlen')));
+        $cfg['telegram']['chatIds'] = self::cleanTargets($cfg['telegram']['chatIds']);
         Store::write('config', $cfg);
         self::$cache = $cfg;
         return $cfg;

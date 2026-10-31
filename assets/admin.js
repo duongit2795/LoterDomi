@@ -84,6 +84,8 @@ function renderGames() {
         <div><label>Tên game</label><input data-f="name" value="${esc(g.name)}"></div>
         <div><label>Loại nguồn</label><select data-f="type" onchange="changeType()">${[['vnlp', 'vnlotteryplan.com (có sẵn)'], ['custom', 'API tuỳ chỉnh']].map(([t, l]) => `<option value="${t}" ${g.type === t ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       </div>
+      <label>Gửi tới (chat_id hoặc chat_id:chủ_đề_id, cách nhau bởi dấu phẩy) – để trống = gửi tới các chat chung ở tab Telegram</label>
+      <input data-f="targets" value="${esc((g.targets || []).join(', '))}" placeholder="trống = chat chung · vd: -1001234567890:12">
       ${body}
       <div class="row">
         <label class="check" style="margin:0"><input type="checkbox" data-f="enabled" ${g.enabled ? 'checked' : ''}> Bật</label>
@@ -100,6 +102,7 @@ function readGames() {
     el.querySelectorAll('[data-f]').forEach((inp) => {
       const f = inp.dataset.f;
       if (f === 'enabled') g.enabled = inp.checked;
+      else if (f === 'targets') g.targets = inp.value.split(/[\s,]+/).filter(Boolean);
       else if (f === 'headers') {
         try { g.headers = JSON.parse(inp.value || '{}'); } catch { throw new Error(`Headers của "${g.name}" không phải JSON hợp lệ`); }
       } else g[f] = inp.value.trim();

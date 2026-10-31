@@ -21,9 +21,19 @@ class Telegram
         return $data['result'];
     }
 
-    public static function sendMessage($chatId, $text, $parseMode = null)
+    // Nơi nhận dạng "chat_id" hoặc "chat_id:topic_id" (chủ đề trong nhóm diễn đàn)
+    public static function parseTarget($target)
     {
-        $params = ['chat_id' => $chatId, 'text' => $text, 'disable_web_page_preview' => true];
+        $target = trim((string) $target);
+        if (preg_match('/^(-?\d+|@\w+):(\d+)$/', $target, $m)) {
+            return ['chat_id' => $m[1], 'message_thread_id' => (int) $m[2]];
+        }
+        return ['chat_id' => $target];
+    }
+
+    public static function sendMessage($target, $text, $parseMode = null)
+    {
+        $params = self::parseTarget($target) + ['text' => $text, 'disable_web_page_preview' => true];
         $mode = $parseMode === null ? Config::get()['telegram']['parseMode'] : $parseMode;
         if ($mode) {
             $params['parse_mode'] = $mode;
@@ -31,11 +41,11 @@ class Telegram
         return self::call('sendMessage', $params);
     }
 
-    // Gửi tới mọi chat đã cấu hình, trả về số chat gửi thành công
-    public static function broadcast($text)
+    // Gửi tới danh sách nơi nhận (mặc định: các chat chung), trả về số nơi gửi thành công
+    public static function broadcast($text, ?array $targets = null)
     {
         $sent = 0;
-        foreach (Config::get()['telegram']['chatIds'] as $id) {
+        foreach ($targets === null ? Config::get()['telegram']['chatIds'] : $targets as $id) {
             try {
                 self::sendMessage($id, $text);
                 $sent++;

@@ -54,8 +54,12 @@ Admin → tab **Cập nhật** → **Kiểm tra cập nhật** → **Cập nhậ
 
 - Tạo bot với @BotFather, dán token vào tab **Telegram**, bấm **Kiểm tra token**.
 - Thêm chat ID thủ công, hoặc người dùng tự gõ `/subscribe` (nếu bật cho phép).
-- Lệnh: `/next` (kỳ sắp mở + kế hoạch), `/last` (kết quả gần nhất), `/subscribe`, `/unsubscribe`, `/id`, `/help`.
+- Lệnh: `/next` (kỳ sắp mở + kế hoạch), `/last` (kết quả gần nhất), `/bind`, `/unbind`, `/topics`, `/subscribe`, `/unsubscribe`, `/id`, `/help`.
 - Nhóm/kênh: thêm bot vào nhóm (kênh: cấp quyền admin), gõ `/id` để lấy chat ID.
+- **Gửi theo chủ đề (topic)**: thêm bot vào nhóm và cấp quyền admin, rồi vào từng chủ đề gõ `/bind 1 phút`
+  (hoặc `/bind <số>` theo danh sách mà `/bind` liệt kê). Game đó chỉ gửi vào chủ đề này. `/unbind` để bỏ, `/topics` để xem
+  game nào đang gửi đi đâu. Có thể nhập tay ô **Gửi tới** của từng game dạng `chat_id:chủ_đề_id` (lấy bằng `/id` trong chủ đề).
+  Game chưa gán sẽ gửi tới các chat chung ở tab Telegram.
 - Bot nhận lệnh bằng `getUpdates` nên không cần webhook hay SSL.
 
 ## Mẫu tin nhắn

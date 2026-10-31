@@ -33,6 +33,12 @@ class Monitor
         return Util::render($cfg['templates'][$kind], self::vars($game, $s), $cfg['telegram']['parseMode'] === 'HTML');
     }
 
+    // Nơi nhận của game: danh sách riêng nếu có, không thì các chat chung
+    public static function targets(array $game)
+    {
+        return $game['targets'] ? $game['targets'] : Config::get()['telegram']['chatIds'];
+    }
+
     public static function activeGames()
     {
         return array_values(array_filter(Config::get()['games'], function ($g) {
@@ -86,7 +92,7 @@ class Monitor
                                 // Đã báo kỳ tiếp trong tin này, không nhắc riêng nữa
                                 $s['remindedIssue'] = $s['nextIssue'];
                             }
-                            $n = Telegram::broadcast($text);
+                            $n = Telegram::broadcast($text, self::targets($game));
                             Logger::info("[{$game['name']}] báo kết quả kỳ {$s['issue']} → $n chat");
                         }
                     }
@@ -114,7 +120,7 @@ class Monitor
             if ($left <= $cfg['monitor']['remindBeforeSeconds'] * 1000 && $left > -5000) {
                 $this->state['games'][$game['id']]['remindedIssue'] = $s['nextIssue'];
                 $this->save();
-                $n = Telegram::broadcast(self::message('upcoming', $game, $s));
+                $n = Telegram::broadcast(self::message('upcoming', $game, $s), self::targets($game));
                 Logger::info("[{$game['name']}] nhắc kỳ {$s['nextIssue']} → $n chat");
             }
         }
