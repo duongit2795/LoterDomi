@@ -83,10 +83,12 @@ function create() {
   // Thử gọi API của 1 game (dùng cấu hình gửi lên, chưa cần lưu)
   app.post('/api/test-fetch', wrap(async (req, res) => {
     const game = config.normalizeGame(req.body.game || {});
-    if (!game.url) throw new Error('Thiếu URL');
+    if (game.type === 'vnlp' ? !game.vnlp.gameId : !game.url) throw new Error(game.type === 'vnlp' ? 'Thiếu gameId' : 'Thiếu URL');
     const raw = await source.fetchRaw(game);
     res.json({ raw, extracted: source.extract(game, raw) });
   }));
+
+  app.get('/api/vnlp/games', wrap(async (req, res) => res.json(await source.vnlpGameList())));
 
   app.post('/api/preview', wrap((req, res) => {
     const game = config.get().games.find((g) => g.id === req.body.gameId) || { name: 'Demo', id: 'demo' };

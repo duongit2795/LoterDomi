@@ -8,6 +8,15 @@ const DEFAULT_GAME = {
   id: '',
   name: '',
   enabled: true,
+  // vnlp: nguồn có sẵn vnlotteryplan.com | custom: API tự cấu hình
+  type: 'custom',
+  vnlp: {
+    gameId: '',
+    play: 'DI',
+    playName: 'Đuôi',
+    turnNumType: 3,     // kế hoạch nuôi 3/4/5 kỳ
+    planNumberType: 1,
+  },
   url: '',
   method: 'GET',
   headers: {},
@@ -32,7 +41,7 @@ const DEFAULT_CONFIG = {
   },
   monitor: {
     enabled: false,
-    intervalSeconds: 10,
+    intervalSeconds: 5,
     notifyResult: true,
     notifyUpcoming: true,
     remindBeforeSeconds: 60,
@@ -43,8 +52,8 @@ const DEFAULT_CONFIG = {
     Referer: 'https://www.vnlotteryplan.com/mobile.html',
   },
   templates: {
-    result: '🎯 <b>{game}</b>\nPhiên: <code>{issue}</code>\nKết quả: <b>{result}</b>',
-    upcoming: '⏰ <b>{game}</b>\nPhiên sắp tới: <code>{nextIssue}</code>\nMở thưởng lúc: {nextTime}\nCòn lại: {countdown}',
+    result: '🎯 <b>{game}</b> – Kỳ <code>{issue}</code>\nKết quả: <b>{result}</b>\n📋 Dàn {planCheck}: về <b>{playResult}</b> → {planStatus}',
+    upcoming: '⏰ <b>{game}</b>\nKỳ sắp mở: <code>{nextIssue}</code> – {nextTime} (còn {countdown})\n📋 Kế hoạch {play} {planRange}: <b>{plan}</b>',
   },
   timezone: 'Asia/Ho_Chi_Minh',
   games: [],
@@ -62,6 +71,7 @@ function merge(base, over) {
 function normalizeGame(g) {
   const game = merge(DEFAULT_GAME, g);
   game.paths = merge(DEFAULT_GAME.paths, g.paths || {});
+  game.vnlp = merge(DEFAULT_GAME.vnlp, g.vnlp || {});
   if (!game.id) game.id = Math.random().toString(36).slice(2, 10);
   return game;
 }

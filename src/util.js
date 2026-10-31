@@ -50,11 +50,13 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 }
 
+// Thay {biến}; dòng nào có biến mà tất cả đều rỗng thì bỏ dòng đó
 function render(tpl, vars, html) {
-  return String(tpl || '').replace(/\{(\w+)\}/g, (_, k) => {
-    const v = vars[k] === undefined ? '' : String(vars[k]);
-    return html ? escapeHtml(v) : v;
-  });
+  const val = (k) => (vars[k] === undefined || vars[k] === null ? '' : String(vars[k]));
+  return String(tpl || '').split('\n').filter((line) => {
+    const keys = [...line.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
+    return !keys.length || keys.some((k) => val(k) !== '');
+  }).join('\n').replace(/\{(\w+)\}/g, (_, k) => (html ? escapeHtml(val(k)) : val(k)));
 }
 
 module.exports = { getPath, stringify, toTimestamp, formatTime, formatCountdown, escapeHtml, render };

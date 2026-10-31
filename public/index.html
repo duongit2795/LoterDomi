@@ -80,7 +80,7 @@
         <h2>Các phiên</h2>
         <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>Game</th><th>Phiên gần nhất</th><th>Kết quả</th><th>Phiên sắp tới</th><th>Còn lại</th><th>Trạng thái</th></tr></thead>
+          <thead><tr><th>Game</th><th>Phiên gần nhất</th><th>Kết quả</th><th>Phiên sắp tới</th><th>Kế hoạch</th><th>Còn lại</th><th>Trạng thái</th></tr></thead>
           <tbody id="t-games"></tbody>
         </table>
         </div>
@@ -91,12 +91,13 @@
     <section data-page="games" class="hidden">
       <div class="card">
         <h2>Nguồn API theo game</h2>
-        <p class="muted">Mỗi game là một endpoint JSON (lấy từ tab Network của DevTools khi mở trang mobile.html).
-          Đường dẫn trường dạng <code>data.list[0].issue</code>. URL có thể chứa <code>{ts}</code> để chèn timestamp.
+        <p class="muted"><b>vnlotteryplan.com</b>: bấm <i>Nhập game từ vnlotteryplan</i> để thêm toàn bộ game (Siêu Tốc, M.Bắc, M.Nam, M.Trung...), bot tự lấy kết quả, kỳ sắp tới và dàn kế hoạch.<br>
+          <b>API tuỳ chỉnh</b>: endpoint JSON bất kỳ, đường dẫn trường dạng <code>data.list[0].issue</code>, URL có thể chứa <code>{ts}</code>.
           Bấm <b>Thử gọi API</b> để xem JSON thô và giá trị trích xuất.</p>
         <div id="games"></div>
         <div class="row">
-          <button class="btn sec" onclick="addGame()">+ Thêm game</button>
+          <button class="btn" onclick="importVnlp()">⬇ Nhập game từ vnlotteryplan</button>
+          <button class="btn sec" onclick="addGame()">+ Thêm API tuỳ chỉnh</button>
           <button class="btn" onclick="saveGames()">Lưu</button>
         </div>
       </div>
@@ -143,7 +144,9 @@
       </div>
       <div class="card">
         <h2>Mẫu tin nhắn</h2>
-        <p class="muted">Biến: {game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}</p>
+        <p class="muted">Biến: {game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}<br>
+          Riêng vnlotteryplan: {play} kiểu chơi, {plan} dàn kế hoạch hiện tại, {planRange} khoảng kỳ, {planCheck} dàn vừa đối chiếu, {playResult} số về, {planStatus} trúng/trượt/đang nuôi.<br>
+          Dòng nào có biến mà tất cả đều rỗng sẽ tự bị bỏ.</p>
         <label>Báo kết quả</label><textarea id="tpl-result"></textarea>
         <button class="btn sec" onclick="preview('result')" style="margin-top:6px">Xem trước</button>
         <label>Nhắc phiên sắp tới</label><textarea id="tpl-upcoming"></textarea>
@@ -217,26 +220,63 @@ function fill() {
 
 // ---- Games ----
 const PATHS = [['issue','Mã phiên vừa mở'],['result','Kết quả'],['nextIssue','Mã phiên sắp tới'],['nextTime','Thời gian mở phiên sắp tới']];
+const sel = (f, cur, opts) => `<select data-f="${f}">${opts.map(([v,l]) => `<option value="${v}" ${String(cur)===String(v)?'selected':''}>${l}</option>`).join('')}</select>`;
 function renderGames() {
-  $('games').innerHTML = cfg.games.map((g, i) => `
-    <div class="game" data-i="${i}">
+  $('games').innerHTML = cfg.games.map((g, i) => {
+    const v = g.vnlp || {};
+    const body = g.type === 'vnlp' ? `
       <div class="grid">
-        <div><label>Tên game</label><input data-f="name" value="${esc(g.name)}"></div>
-        <div><label>Method</label><select data-f="method">${['GET','POST'].map((m) => `<option ${g.method===m?'selected':''}>${m}</option>`).join('')}</select></div>
-        <div><label>Kiểu thời gian</label><select data-f="timeMode">${[['auto','Tự nhận'],['seconds','Unix giây'],['milliseconds','Unix ms'],['remaining','Số giây còn lại']].map(([v,l]) => `<option value="${v}" ${g.timeMode===v?'selected':''}>${l}</option>`).join('')}</select></div>
+        <div><label>Game ID (vnlotteryplan)</label><input data-v="gameId" value="${esc(v.gameId)}"></div>
+        <div><label>Kiểu chơi (play code)</label><input data-v="play" value="${esc(v.play)}"></div>
+        <div><label>Tên kiểu chơi</label><input data-v="playName" value="${esc(v.playName)}"></div>
+        <div><label>Kế hoạch nuôi</label><select data-v="turnNumType">${[3,4,5].map((n) => `<option value="${n}" ${+v.turnNumType===n?'selected':''}>${n} kỳ</option>`).join('')}</select></div>
+        <div><label>Loại dàn số (planNumberType)</label><select data-v="planNumberType">${[1,2,3,4,5].map((n) => `<option ${+v.planNumberType===n?'selected':''}>${n}</option>`).join('')}</select></div>
+      </div>` : `
+      <div class="grid">
+        <div><label>Method</label>${sel('method', g.method, [['GET','GET'],['POST','POST']])}</div>
+        <div><label>Kiểu thời gian</label>${sel('timeMode', g.timeMode, [['auto','Tự nhận'],['seconds','Unix giây'],['milliseconds','Unix ms'],['remaining','Số giây còn lại']])}</div>
       </div>
-      <label>URL API</label><input data-f="url" value="${esc(g.url)}" placeholder="https://www.vnlotteryplan.com/api/...">
+      <label>URL API</label><input data-f="url" value="${esc(g.url)}" placeholder="https://...">
       <div class="grid">${PATHS.map(([k,l]) => `<div><label>${l}</label><input data-p="${k}" value="${esc(g.paths[k])}" placeholder="vd: data.${k}"></div>`).join('')}</div>
       <div class="grid">
         <div><label>Headers riêng (JSON)</label><textarea data-f="headers">${esc(JSON.stringify(g.headers || {}, null, 2))}</textarea></div>
         <div><label>Body (cho POST)</label><textarea data-f="body">${esc(g.body)}</textarea></div>
+      </div>`;
+    return `
+    <div class="game" data-i="${i}">
+      <div class="grid">
+        <div><label>Tên game</label><input data-f="name" value="${esc(g.name)}"></div>
+        <div><label>Loại nguồn</label><select data-f="type" onchange="changeType(${i})">${[['vnlp','vnlotteryplan.com (có sẵn)'],['custom','API tuỳ chỉnh']].map(([t,l]) => `<option value="${t}" ${g.type===t?'selected':''}>${l}</option>`).join('')}</select></div>
       </div>
+      ${body}
       <div class="row">
         <label class="check" style="margin:0"><input type="checkbox" data-f="enabled" ${g.enabled?'checked':''}> Bật</label>
         <button class="btn sec" onclick="testGame(${i})">Thử gọi API</button>
         <button class="btn danger" onclick="removeGame(${i})">Xoá</button>
       </div>
-    </div>`).join('') || '<p class="muted">Chưa có game nào.</p>';
+    </div>`;
+  }).join('') || '<p class="muted">Chưa có game nào. Bấm "Nhập game từ vnlotteryplan".</p>';
+}
+
+function changeType(i) {
+  try { readGames(); } catch (e) { return toast(e.message, true); }
+  renderGames();
+}
+
+async function importVnlp() {
+  try {
+    readGames();
+    const { games, plays } = await api('/vnlp/games');
+    const play = plays[0] || { play: 'DI', playName: 'Đuôi' };
+    const have = new Set(cfg.games.filter((g) => g.type === 'vnlp').map((g) => String(g.vnlp.gameId)));
+    const fresh = games.filter((g) => !have.has(String(g.gameId)));
+    if (!fresh.length) return toast('Tất cả game đã có trong danh sách');
+    for (const g of fresh) {
+      cfg.games.push({ name: g.name, type: 'vnlp', enabled: true, vnlp: { gameId: g.gameId, play: play.play, playName: play.playName, turnNumType: 3, planNumberType: 1 }, paths: {}, headers: {} });
+    }
+    renderGames();
+    toast(`Đã thêm ${fresh.length} game – nhớ bấm Lưu`);
+  } catch (e) { toast(e.message, true); }
 }
 
 function readGames() {
@@ -250,12 +290,17 @@ function readGames() {
       } else g[f] = inp.value.trim();
     });
     el.querySelectorAll('[data-p]').forEach((inp) => g.paths[inp.dataset.p] = inp.value.trim());
+    g.vnlp = g.vnlp || {};
+    el.querySelectorAll('[data-v]').forEach((inp) => {
+      const k = inp.dataset.v;
+      g.vnlp[k] = ['turnNumType', 'planNumberType'].includes(k) ? +inp.value : inp.value.trim();
+    });
   });
 }
 
 function addGame() {
   try { readGames(); } catch (e) { return toast(e.message, true); }
-  cfg.games.push({ name: 'Game mới', enabled: true, url: '', method: 'GET', headers: {}, body: '', timeMode: 'auto', paths: { issue:'', result:'', nextIssue:'', nextTime:'' } });
+  cfg.games.push({ name: 'Game mới', type: 'custom', enabled: true, url: '', method: 'GET', headers: {}, body: '', timeMode: 'auto', paths: { issue:'', result:'', nextIssue:'', nextTime:'' } });
   renderGames();
 }
 function removeGame(i) {
@@ -344,8 +389,8 @@ function renderDash() {
   $('t-games').innerHTML = status.games.map((g) => {
     const s = g.state || {};
     const st = !g.enabled ? '<span class="badge b-off">Tắt</span>' : s.lastError ? `<span class="badge b-err" title="${esc(s.lastError)}">Lỗi</span>` : s.lastFetch ? '<span class="badge b-ok">OK</span>' : '<span class="badge b-off">Chờ</span>';
-    return `<tr><td>${esc(g.name)}</td><td>${esc(s.issue)}</td><td><b>${esc(s.result)}</b></td><td>${esc(s.nextIssue)}<div class="muted">${s.nextTime ? new Date(s.nextTime).toLocaleTimeString('vi-VN') : ''}</div></td><td>${s.nextTime ? countdown(s.nextTime - now) : ''}</td><td>${st}</td></tr>`;
-  }).join('') || '<tr><td colspan="6" class="muted">Chưa có game. Thêm ở tab "Nguồn API".</td></tr>';
+    return `<tr><td>${esc(g.name)}</td><td>${esc(s.issue)}</td><td><b>${esc(s.result)}</b></td><td>${esc(s.nextIssue)}<div class="muted">${s.nextTime ? new Date(s.nextTime).toLocaleTimeString('vi-VN') : ''}</div></td><td><b>${esc(s.plan)}</b><div class="muted">${esc(s.planStatus)}</div></td><td>${s.nextTime ? countdown(s.nextTime - now) : ''}</td><td>${st}</td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="muted">Chưa có game. Thêm ở tab "Nguồn API".</td></tr>';
 }
 setInterval(refresh, 5000);
 setInterval(renderDash, 1000);

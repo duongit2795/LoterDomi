@@ -14,7 +14,25 @@ npm install
 npm start                 # http://localhost:3000
 ```
 
-## Cấu hình nguồn API
+## Nguồn vnlotteryplan.com (có sẵn)
+
+Tab **Nguồn API** → **⬇ Nhập game từ vnlotteryplan** → **Lưu**. Bot tự thêm toàn bộ game
+(Siêu Tốc 45s/1p/1.5p/2p/5p, M.Bắc 75s, M.Nam 45s, M.Trung 75s) và báo:
+- kết quả kỳ vừa mở + dàn kế hoạch vừa đối chiếu (✅ trúng kỳ N / ❌ trượt / ⏳ đang nuôi)
+- kỳ sắp mở + dàn kế hoạch mới
+
+API dùng (công khai, không cần đăng nhập):
+| Endpoint | Nội dung |
+|---|---|
+| `GET /api/front/wl/plan/lotteryProject/planGameList` | danh sách game (`rows`) và kiểu chơi (`other`, vd `DI` = Đuôi) |
+| `GET /api/front/wl/plan/lotteryProject/queryLotteryPlanProject?gameId=110&play=DI&turnNumType=3&planNumberType=1&page=1&pageSize=5` | `t.lottery` (kỳ vừa mở: `turnNum`, `openNum`), `t.nextTurnNum`, `t.nextOpenTime`, `t.serverTime`, `t.planNumber` (dàn hiện tại), `t.resultDetail.data` (lịch sử kế hoạch, `winStatus` 1=trúng 0=trượt 2=đang nuôi) |
+| `GET /api/front/wl/time` | giờ máy chủ |
+
+`turnNumType` = số kỳ nuôi (3/4/5), chỉnh được cho từng game.
+
+> Nếu máy chủ chạy bot phải đi qua proxy HTTP, chạy với `NODE_USE_ENV_PROXY=1` (Node ≥ 22.21) để `fetch` dùng `HTTPS_PROXY`.
+
+## Cấu hình API tuỳ chỉnh
 
 1. Mở `https://www.vnlotteryplan.com/mobile.html` trên Chrome → F12 → tab **Network** → lọc **Fetch/XHR**.
 2. Tìm request trả về JSON có mã phiên / kết quả / thời gian phiên kế tiếp. Copy URL (và headers cần thiết nếu có, ví dụ token).
@@ -40,7 +58,9 @@ URL có thể chứa `{ts}` để chèn timestamp chống cache. Hỗ trợ GET/
 ## Cài đặt
 
 Tab **Cài đặt**: bật/tắt theo dõi, chu kỳ gọi API, số giây nhắc trước, bật/tắt từng loại thông báo, mẫu tin nhắn
-(biến `{game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}`), header chung cho mọi request.
+(biến `{game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}`; riêng vnlotteryplan thêm
+`{play} {plan} {planRange} {planCheck} {playResult} {planStatus}`), header chung cho mọi request.
+Dòng nào có biến mà tất cả đều rỗng sẽ tự bị bỏ.
 
 > Lần chạy đầu tiên bot chỉ ghi nhận phiên hiện tại, không gửi kết quả cũ để tránh spam.
 

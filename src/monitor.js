@@ -21,6 +21,7 @@ function saveState() {
 function vars(game, s, now = Date.now()) {
   const tz = config.get().timezone;
   return {
+    ...s,
     game: game.name || game.id,
     issue: s.issue || '',
     result: s.result || '',
@@ -87,7 +88,7 @@ async function tick() {
   if (cfg.monitor.enabled && !busy) {
     busy = true;
     try {
-      await Promise.all(cfg.games.filter((g) => g.enabled && g.url).map(checkGame));
+      await Promise.all(cfg.games.filter((g) => g.enabled && (g.type === 'vnlp' ? g.vnlp.gameId : g.url)).map(checkGame));
       saveState();
     } finally { busy = false; }
   }

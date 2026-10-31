@@ -24,7 +24,8 @@ function nextText() {
     const s = st[g.id] || {};
     if (!s.nextIssue) return `• <b>${escapeHtml(g.name)}</b>: chưa có dữ liệu`;
     return `• <b>${escapeHtml(g.name)}</b>: phiên <code>${escapeHtml(s.nextIssue)}</code>` +
-      (s.nextTime ? ` – ${formatTime(s.nextTime, tz)} (còn ${formatCountdown(s.nextTime - Date.now())})` : '');
+      (s.nextTime ? ` – ${formatTime(s.nextTime, tz)} (còn ${formatCountdown(s.nextTime - Date.now())})` : '') +
+      (s.plan ? `\n   📋 ${escapeHtml(s.play || '')} ${escapeHtml(s.planRange || '')}: <b>${escapeHtml(s.plan)}</b>` : '');
   });
   return lines.length ? '⏰ <b>Phiên sắp tới</b>\n' + lines.join('\n') : 'Chưa cấu hình game nào.';
 }
@@ -34,7 +35,8 @@ function lastText() {
   const lines = games().map((g) => {
     const s = st[g.id] || {};
     if (!s.issue) return `• <b>${escapeHtml(g.name)}</b>: chưa có dữ liệu`;
-    return `• <b>${escapeHtml(g.name)}</b>: phiên <code>${escapeHtml(s.issue)}</code> → <b>${escapeHtml(s.result)}</b>`;
+    return `• <b>${escapeHtml(g.name)}</b>: phiên <code>${escapeHtml(s.issue)}</code> → <b>${escapeHtml(s.result)}</b>` +
+      (s.planStatus ? `\n   📋 ${escapeHtml(s.planCheck)} → ${escapeHtml(s.planStatus)}` : '');
   });
   return lines.length ? '🎯 <b>Kết quả gần nhất</b>\n' + lines.join('\n') : 'Chưa cấu hình game nào.';
 }
