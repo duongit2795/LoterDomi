@@ -212,7 +212,7 @@ class Source
     }
 
     // Phân loại dàn đã kết thúc: win = trúng trong winMaxTurn kỳ đầu, lose = trượt,
-    // late = trúng muộn hơn (không tính thắng, làm đứt chuỗi), null = đang nuôi
+    // late = trúng muộn hơn (tuỳ cài đặt: tính là thua hoặc làm đứt chuỗi), null = đang nuôi
     private static function planOutcome(array $r, $winMaxTurn)
     {
         $ws = isset($r['winStatus']) ? (int) $r['winStatus'] : 2;
@@ -230,7 +230,9 @@ class Source
     // streakNew = kỳ vừa mở làm kết thúc một dàn (chuỗi vừa thay đổi).
     private static function streak(array $rows, $hit)
     {
-        $winMaxTurn = max(1, (int) Config::get()['monitor']['streak']['winMaxTurn']);
+        $streakCfg = Config::get()['monitor']['streak'];
+        $winMaxTurn = max(1, (int) $streakCfg['winMaxTurn']);
+        $lateAsLose = $streakCfg['lateAs'] === 'lose';
         $type = null;
         $count = 0;
         $completed = 0;
@@ -239,6 +241,9 @@ class Source
             $o = self::planOutcome($r, $winMaxTurn);
             if ($o === null) {
                 continue;
+            }
+            if ($o === 'late' && $lateAsLose) {
+                $o = 'lose';
             }
             $completed++;
             if ($broken) {

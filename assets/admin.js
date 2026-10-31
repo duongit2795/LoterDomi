@@ -49,7 +49,7 @@ function fill() {
   $('m-timeout').value = m.requestTimeoutSeconds; $('m-tz').value = cfg.timezone;
   $('m-result').checked = m.notifyResult; $('m-upcoming').checked = m.notifyUpcoming; $('m-combine').checked = m.combineNext;
   const st = m.streak;
-  $('st-enabled').checked = st.enabled; $('st-win').value = st.winMin; $('st-lose').value = st.loseMin; $('st-turn').value = st.winMaxTurn; $('st-targets').value = st.targets.join(', ');
+  $('st-enabled').checked = st.enabled; $('st-win').value = st.winMin; $('st-lose').value = st.loseMin; $('st-turn').value = st.winMaxTurn; $('st-late').value = st.lateAs; $('st-targets').value = st.targets.join(', ');
   $('tpl-streak').value = cfg.templates.streak;
   $('tpl-result').value = cfg.templates.result; $('tpl-upcoming').value = cfg.templates.upcoming; $('tpl-next').value = cfg.templates.next;
   $('g-headers').value = JSON.stringify(cfg.globalHeaders, null, 2);
@@ -207,7 +207,7 @@ async function saveSettings(silent) {
         remindBeforeSeconds: +$('m-remind').value || 0, requestTimeoutSeconds: +$('m-timeout').value || 15,
         notifyResult: $('m-result').checked, notifyUpcoming: $('m-upcoming').checked, combineNext: $('m-combine').checked,
         streak: {
-          enabled: $('st-enabled').checked, winMin: +$('st-win').value || 0, loseMin: +$('st-lose').value || 0, winMaxTurn: +$('st-turn').value || 1,
+          enabled: $('st-enabled').checked, winMin: +$('st-win').value || 0, loseMin: +$('st-lose').value || 0, winMaxTurn: +$('st-turn').value || 1, lateAs: $('st-late').value,
           targets: $('st-targets').value.split(/[\s,]+/).filter(Boolean),
         },
       },

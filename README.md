@@ -65,7 +65,8 @@ Admin → tab **Cập nhật** → **Kiểm tra cập nhật** → **Cập nhậ
 ## Báo chuỗi thắng/thua liên tiếp
 
 Mỗi "ván" là một dàn kế hoạch đã kết thúc. **Thắng** = trúng ngay kỳ 1 (chỉnh được: trúng trong N kỳ đầu);
-dàn trúng muộn hơn (kỳ 2, kỳ 3) không tính thắng và làm đứt chuỗi. **Thua** = trượt cả dàn. Khi một game thắng hoặc thua liên tiếp đạt ngưỡng
+**Thua** = trượt cả dàn, và mặc định cả dàn trúng muộn (kỳ 2, kỳ 3). Có thể đổi để dàn trúng muộn
+không tính (làm đứt chuỗi) – khi đó chuỗi thua rất hiếm vì chỉ còn dàn trượt cả 3 kỳ. Khi một game thắng hoặc thua liên tiếp đạt ngưỡng
 (mặc định **từ ván 4**), bot báo vào nơi nhận riêng, mỗi ván tiếp theo của chuỗi đều báo:
 
 ```

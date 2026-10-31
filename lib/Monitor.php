@@ -118,6 +118,10 @@ class Monitor
         if ($min <= 0 || $s['streakCount'] < $min) {
             return;
         }
+        // Dàn trúng muộn được tính là thua: ghi rõ để tin không bị mâu thuẫn
+        if ($s['streakType'] === 'lose' && ($s['hitStatus'] ?? '') === '1') {
+            $s['planStatus'] = "⚠️ Trúng muộn kỳ {$s['hitTurn']} (tính là thua)";
+        }
         $n = Telegram::broadcast(self::message('streak', $game, $s), $cfg['targets']);
         Logger::info("[{$game['name']}] chuỗi {$s['streakType']} {$s['streakCount']} ván → $n chat");
     }
