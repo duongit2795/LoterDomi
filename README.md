@@ -1,77 +1,84 @@
-# LoterDomi – Telegram bot báo phiên + Web admin
+# LoterDomi – Telegram bot báo kỳ xổ số + Web admin (PHP)
 
-Bot Telegram theo dõi các phiên xổ số (ví dụ trên vnlotteryplan.com/mobile.html), gửi:
-- 🎯 **Kết quả** khi có phiên mới mở thưởng
-- ⏰ **Nhắc phiên sắp tới** trước N giây
+Bot Telegram theo dõi các game trên **vnlotteryplan.com** (Siêu Tốc 45s/1p/1.5p/2p/5p, M.Bắc 75s, M.Nam 45s, M.Trung 75s) và gửi:
 
-Mọi cấu hình (token bot, chat nhận tin, API nguồn, mẫu tin nhắn, chu kỳ...) chỉnh trong **web admin**, lưu ở `data/config.json`.
+- 🎯 **Kết quả** kỳ vừa mở + dàn kế hoạch vừa đối chiếu (✅ trúng kỳ N / ❌ trượt / ⏳ đang nuôi)
+- ⏰ **Nhắc kỳ sắp mở** trước N giây + dàn kế hoạch mới
 
-## Chạy
+Toàn bộ cấu hình nằm trong web admin. Không cần MySQL: dữ liệu lưu ở `data/` dạng file có chặn truy cập.
 
-```bash
-cp .env.example .env      # đặt ADMIN_PASSWORD
-npm install
-npm start                 # http://localhost:3000
-```
+## Cài đặt trên aaPanel
 
-## Nguồn vnlotteryplan.com (có sẵn)
+1. **Website → Add site**, chọn PHP ≥ 7.4 (khuyên dùng 8.x).
+2. Đưa code vào thư mục site, ví dụ `/www/wwwroot/bot.example.com`:
+   ```bash
+   cd /www/wwwroot/bot.example.com
+   git clone https://github.com/duongit2795/loterdomi.git .
+   chown -R www:www .
+   ```
+   Hoặc tải zip từ GitHub rồi upload và giải nén bằng File Manager của aaPanel.
+3. Bật extension **zip** cho PHP (App Store → PHP → Settings → Install extensions), dùng cho tính năng Cập nhật.
+4. Mở `https://bot.example.com/install.php`, điền mật khẩu admin, token bot, chat ID rồi bấm **Cài đặt**.
+5. Tạo **Cron**: aaPanel → Cron → Add Cron
+   - Type: **Shell Script**, Period: **N Minutes = 1**
+   - Script: `sudo -u www php /www/wwwroot/bot.example.com/worker.php`
 
-Tab **Nguồn API** → **⬇ Nhập game từ vnlotteryplan** → **Lưu**. Bot tự thêm toàn bộ game
-(Siêu Tốc 45s/1p/1.5p/2p/5p, M.Bắc 75s, M.Nam 45s, M.Trung 75s) và báo:
-- kết quả kỳ vừa mở + dàn kế hoạch vừa đối chiếu (✅ trúng kỳ N / ❌ trượt / ⏳ đang nuôi)
-- kỳ sắp mở + dàn kế hoạch mới
+   Worker chạy khoảng 55 giây mỗi lần, nên các game 45 giây vẫn được báo kịp.
+   Nếu có nhiều bản PHP, dùng đường dẫn đầy đủ, ví dụ `/www/server/php/82/bin/php`.
+6. Nginx (mặc định của aaPanel): Website → Conf, thêm:
+   ```nginx
+   location ^~ /data/ { deny all; }
+   location ^~ /lib/ { deny all; }
+   ```
+   Kể cả khi thiếu dòng này, các file dữ liệu vẫn không bị lộ nội dung.
 
-API dùng (công khai, không cần đăng nhập):
+Chạy liên tục (không cần cron): dùng **Supervisor** của aaPanel với lệnh
+`php /www/wwwroot/bot.example.com/worker.php --daemon`, user `www`.
+
+## Cập nhật từ GitHub
+
+Admin → tab **Cập nhật** → **Kiểm tra cập nhật** → **Cập nhật ngay**.
+
+- Tải code của nhánh đã cấu hình (mặc định `duongit2795/loterdomi`, nhánh `master`) qua GitHub API. Không cần `git` hay `exec` trên server.
+- Trước khi chép đè, code hiện tại được tự sao lưu vào `data/backups/` (giữ 5 bản). Có thể **Khôi phục** từ tab này.
+- Thư mục `data/` (cấu hình, trạng thái, log) luôn được giữ nguyên.
+- Repo private: tạo fine-grained token với quyền **Contents: Read-only** và nhập vào ô GitHub token.
+- Thư mục site phải ghi được bởi user chạy PHP: `chown -R www:www /www/wwwroot/bot.example.com`.
+
+## Bot Telegram
+
+- Tạo bot với @BotFather, dán token vào tab **Telegram**, bấm **Kiểm tra token**.
+- Thêm chat ID thủ công, hoặc người dùng tự gõ `/subscribe` (nếu bật cho phép).
+- Lệnh: `/next` (kỳ sắp mở + kế hoạch), `/last` (kết quả gần nhất), `/subscribe`, `/unsubscribe`, `/id`, `/help`.
+- Nhóm/kênh: thêm bot vào nhóm (kênh: cấp quyền admin), gõ `/id` để lấy chat ID.
+- Bot nhận lệnh bằng `getUpdates` nên không cần webhook hay SSL.
+
+## Mẫu tin nhắn
+
+Biến: `{game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}`.
+Riêng vnlotteryplan có thêm: `{play} {plan} {planRange} {planCheck} {playResult} {planStatus}`.
+Dòng nào có biến mà tất cả đều rỗng sẽ tự bị bỏ.
+
+## API vnlotteryplan.com
+
+Công khai, không cần đăng nhập:
+
 | Endpoint | Nội dung |
 |---|---|
 | `GET /api/front/wl/plan/lotteryProject/planGameList` | danh sách game (`rows`) và kiểu chơi (`other`, vd `DI` = Đuôi) |
 | `GET /api/front/wl/plan/lotteryProject/queryLotteryPlanProject?gameId=110&play=DI&turnNumType=3&planNumberType=1&page=1&pageSize=5` | `t.lottery` (kỳ vừa mở: `turnNum`, `openNum`), `t.nextTurnNum`, `t.nextOpenTime`, `t.serverTime`, `t.planNumber` (dàn hiện tại), `t.resultDetail.data` (lịch sử kế hoạch, `winStatus` 1=trúng 0=trượt 2=đang nuôi) |
 | `GET /api/front/wl/time` | giờ máy chủ |
 
-`turnNumType` = số kỳ nuôi (3/4/5), chỉnh được cho từng game.
-
-> Nếu máy chủ chạy bot phải đi qua proxy HTTP, chạy với `NODE_USE_ENV_PROXY=1` (Node ≥ 22.21) để `fetch` dùng `HTTPS_PROXY`.
-
-## Cấu hình API tuỳ chỉnh
-
-1. Mở `https://www.vnlotteryplan.com/mobile.html` trên Chrome → F12 → tab **Network** → lọc **Fetch/XHR**.
-2. Tìm request trả về JSON có mã phiên / kết quả / thời gian phiên kế tiếp. Copy URL (và headers cần thiết nếu có, ví dụ token).
-3. Web admin → **Nguồn API** → *Thêm game* → dán URL, điền đường dẫn trường, ví dụ:
-   | Trường | Ví dụ |
-   |---|---|
-   | Mã phiên vừa mở | `data.list[0].issue` |
-   | Kết quả | `data.list[0].openCode` |
-   | Mã phiên sắp tới | `data.next.issue` |
-   | Thời gian mở phiên sắp tới | `data.next.openTime` |
-4. Bấm **Thử gọi API** để xem JSON thô và kiểm tra giá trị trích xuất, rồi **Lưu**.
-5. **Kiểu thời gian**: *Tự nhận* (unix giây/ms hoặc chuỗi ngày), hoặc *Số giây còn lại* nếu API trả countdown.
-
-URL có thể chứa `{ts}` để chèn timestamp chống cache. Hỗ trợ GET/POST, JSON và JSONP.
-
-## Telegram
-
-- Tạo bot qua @BotFather, dán token ở tab **Telegram** → *Kiểm tra token*.
-- Thêm chat id thủ công, hoặc người dùng gõ `/subscribe` (nếu bật cho phép).
-- Lệnh bot: `/next`, `/last`, `/subscribe`, `/unsubscribe`, `/id`, `/help`.
-- Muốn gửi vào nhóm/kênh: thêm bot vào nhóm (kênh: cấp quyền admin), gõ `/id` để lấy chat id.
-
-## Cài đặt
-
-Tab **Cài đặt**: bật/tắt theo dõi, chu kỳ gọi API, số giây nhắc trước, bật/tắt từng loại thông báo, mẫu tin nhắn
-(biến `{game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}`; riêng vnlotteryplan thêm
-`{play} {plan} {planRange} {planCheck} {playResult} {planStatus}`), header chung cho mọi request.
-Dòng nào có biến mà tất cả đều rỗng sẽ tự bị bỏ.
-
-> Lần chạy đầu tiên bot chỉ ghi nhận phiên hiện tại, không gửi kết quả cũ để tránh spam.
+`turnNumType` là số kỳ nuôi (3/4/5), chỉnh được cho từng game. Ngoài ra có thể thêm **API tuỳ chỉnh** bất kỳ (endpoint JSON + đường dẫn trường).
 
 ## Cấu trúc
 
 ```
-src/index.js     khởi động web admin + monitor + bot
-src/admin.js     API web admin (đăng nhập bằng ADMIN_PASSWORD)
-src/monitor.js   vòng lặp gọi API, phát hiện phiên mới, nhắc phiên sắp tới
-src/source.js    gọi API nguồn & trích trường theo đường dẫn JSON
-src/telegram.js  gửi tin / nhận lệnh (long polling, không cần webhook)
-src/bot.js       xử lý lệnh bot
-public/index.html  giao diện admin
+install.php      trình cài đặt (tự khoá sau khi cài)
+admin.php        trang quản trị (đăng nhập)
+api.php          API JSON cho trang quản trị
+worker.php       tiến trình nền: gọi API, gửi thông báo, nhận lệnh bot
+lib/             mã nguồn (Config, Source, Monitor, Bot, Telegram, Updater...)
+assets/          CSS/JS giao diện
+data/            cấu hình, trạng thái, log, bản sao lưu (không đưa lên git)
 ```
