@@ -46,8 +46,8 @@ function fill() {
   const m = cfg.monitor;
   $('m-enabled').checked = m.enabled; $('m-interval').value = m.intervalSeconds; $('m-remind').value = m.remindBeforeSeconds;
   $('m-timeout').value = m.requestTimeoutSeconds; $('m-tz').value = cfg.timezone;
-  $('m-result').checked = m.notifyResult; $('m-upcoming').checked = m.notifyUpcoming;
-  $('tpl-result').value = cfg.templates.result; $('tpl-upcoming').value = cfg.templates.upcoming;
+  $('m-result').checked = m.notifyResult; $('m-upcoming').checked = m.notifyUpcoming; $('m-combine').checked = m.combineNext;
+  $('tpl-result').value = cfg.templates.result; $('tpl-upcoming').value = cfg.templates.upcoming; $('tpl-next').value = cfg.templates.next;
   $('g-headers').value = JSON.stringify(cfg.globalHeaders, null, 2);
   $('u-repo').value = cfg.update.repo; $('u-branch').value = cfg.update.branch; $('u-token').value = cfg.update.token;
   renderGames();
@@ -198,10 +198,10 @@ async function saveSettings(silent) {
       monitor: {
         enabled: $('m-enabled').checked, intervalSeconds: +$('m-interval').value || 5,
         remindBeforeSeconds: +$('m-remind').value || 0, requestTimeoutSeconds: +$('m-timeout').value || 15,
-        notifyResult: $('m-result').checked, notifyUpcoming: $('m-upcoming').checked,
+        notifyResult: $('m-result').checked, notifyUpcoming: $('m-upcoming').checked, combineNext: $('m-combine').checked,
       },
       timezone: $('m-tz').value.trim() || 'Asia/Ho_Chi_Minh',
-      templates: { result: $('tpl-result').value, upcoming: $('tpl-upcoming').value },
+      templates: { result: $('tpl-result').value, upcoming: $('tpl-upcoming').value, next: $('tpl-next').value },
       globalHeaders: headers,
     });
     if (!silent) toast('Đã lưu');

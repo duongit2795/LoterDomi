@@ -98,7 +98,13 @@ try {
                 }
             }
             $s = Monitor::snapshot()['games'][$game['id']] ?? ['issue' => '31/10/2026-0001', 'result' => '1,2,3,4,5,6', 'nextIssue' => '31/10/2026-0002', 'nextTime' => Util::nowMs() + 60000];
-            out(['text' => Monitor::message(($body['kind'] ?? '') === 'upcoming' ? 'upcoming' : 'result', $game, $s)]);
+            $kind = ($body['kind'] ?? '') === 'upcoming' ? 'upcoming' : 'result';
+            $text = Monitor::message($kind, $game, $s);
+            if ($kind === 'result' && Config::get()['monitor']['combineNext']) {
+                $next = Monitor::message('next', $game, $s);
+                $text .= $next !== '' ? "\n\n" . $next : '';
+            }
+            out(['text' => $text]);
 
         case 'POST bot-info':
             out(Telegram::call('getMe', [], ($body['token'] ?? '') ?: null));

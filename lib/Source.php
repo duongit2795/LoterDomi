@@ -11,7 +11,7 @@ class Source
             case 1:
                 return "✅ Trúng kỳ $sort";
             case 2:
-                return "⏳ Đang nuôi kỳ $sort";
+                return "⏳ Chưa trúng, nuôi tiếp kỳ $sort";
         }
         return '';
     }
@@ -158,6 +158,7 @@ class Source
             'result' => Util::str(Util::getPath($raw, $p['result'])),
             'nextIssue' => Util::str(Util::getPath($raw, $p['nextIssue'])),
             'nextTime' => Util::toTimestamp(Util::getPath($raw, $p['nextTime']), $game['timeMode'], $nowMs),
+            'planReady' => true,
         ];
     }
 
@@ -182,6 +183,13 @@ class Source
             return str_replace(',', ' ', (string) $s);
         };
         $serverTime = !empty($t['serverTime']) ? $t['serverTime'] : $nowMs;
+        $nextTurn = isset($t['nextTurnNum']) ? (string) $t['nextTurnNum'] : '';
+        // Kế hoạch kỳ tiếp đã sẵn sàng: dòng mới nhất đang nuôi và khoảng kỳ chứa kỳ tiếp
+        $nextReady = false;
+        if (isset($rows[0]['winStatus'], $rows[0]['turnNumRange']) && (int) $rows[0]['winStatus'] === 2
+            && preg_match('/(\d+)\s*-\s*(\d+)/', $rows[0]['turnNumRange'], $rm) && preg_match('/(\d+)$/', $nextTurn, $nm)) {
+            $nextReady = (int) $nm[1] >= (int) $rm[1] && (int) $nm[1] <= (int) $rm[2];
+        }
         return [
             'issue' => Util::str($turn),
             'result' => Util::str(isset($lot['openNum']) ? $lot['openNum'] : ''),
@@ -189,11 +197,15 @@ class Source
             // Bù lệch đồng hồ giữa máy chủ nguồn và máy chạy bot
             'nextTime' => !empty($t['nextOpenTime']) ? (int) ($t['nextOpenTime'] - $serverTime + $nowMs) : null,
             'play' => $game['vnlp']['playName'] ?: $game['vnlp']['play'],
-            'plan' => $spaced(isset($t['planNumber']) ? $t['planNumber'] : ''),
-            'planRange' => isset($rows[0]['turnNumRange']) ? $rows[0]['turnNumRange'] : '',
+            // Kế hoạch cho kỳ tiếp = dòng mới nhất đang nuôi (t.planNumber là dàn vừa đối chiếu, không phải dàn kỳ tiếp)
+            'plan' => $nextReady ? $spaced($rows[0]['planNumber']) : '',
+            'planRange' => $nextReady ? $rows[0]['turnNumRange'] : '',
+            'planTurn' => $nextReady ? (string) $rows[0]['currentTurnSort'] : '',
             'planCheck' => $hit ? $spaced($hit['planNumber']) . ' (' . $hit['turnNumRange'] . ')' : '',
             'playResult' => $hit ? Util::str($hit['openNum']) : '',
             'planStatus' => $hit ? self::vnlpStatus($hit['winStatus'], $hit['currentTurnSort']) : '',
+            // Dữ liệu kế hoạch đã khớp với kỳ vừa mở và kỳ tiếp theo
+            'planReady' => $hit !== null && $nextReady,
         ];
     }
 }

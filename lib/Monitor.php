@@ -2,6 +2,8 @@
 // Theo dõi các game: phát hiện kỳ mới có kết quả, nhắc kỳ sắp mở
 class Monitor
 {
+    const PLAN_WAIT_MS = 20000;
+
     private $state;
 
     public function __construct()
@@ -64,11 +66,30 @@ class Monitor
             // Kỳ mới có kết quả
             if ($s['issue'] !== '' && $s['result'] !== '' && (!isset($s['notifiedIssue']) || $s['notifiedIssue'] !== $s['issue'])) {
                 $first = !array_key_exists('notifiedIssue', $s);
-                $s['notifiedIssue'] = $s['issue'];
-                // Lần đầu chỉ ghi nhận, không gửi để tránh spam khi mới chạy
-                if (!$first && $cfg['monitor']['notifyResult']) {
-                    $n = Telegram::broadcast(self::message('result', $game, $s));
-                    Logger::info("[{$game['name']}] báo kết quả kỳ {$s['issue']} → $n chat");
+                if ($first) {
+                    // Lần đầu chỉ ghi nhận, không gửi để tránh spam khi mới chạy
+                    $s['notifiedIssue'] = $s['issue'];
+                } else {
+                    if (!isset($s['pendingIssue']) || $s['pendingIssue'] !== $s['issue']) {
+                        $s['pendingIssue'] = $s['issue'];
+                        $s['pendingSince'] = Util::nowMs();
+                    }
+                    // Chờ API cập nhật xong dàn kế hoạch (tối đa PLAN_WAIT_MS) rồi mới gửi
+                    if (!empty($s['planReady']) || Util::nowMs() - $s['pendingSince'] >= self::PLAN_WAIT_MS) {
+                        $s['notifiedIssue'] = $s['issue'];
+                        unset($s['pendingIssue'], $s['pendingSince']);
+                        if ($cfg['monitor']['notifyResult']) {
+                            $text = self::message('result', $game, $s);
+                            if ($cfg['monitor']['combineNext']) {
+                                $next = self::message('next', $game, $s);
+                                $text .= $next !== '' ? "\n\n" . $next : '';
+                                // Đã báo kỳ tiếp trong tin này, không nhắc riêng nữa
+                                $s['remindedIssue'] = $s['nextIssue'];
+                            }
+                            $n = Telegram::broadcast($text);
+                            Logger::info("[{$game['name']}] báo kết quả kỳ {$s['issue']} → $n chat");
+                        }
+                    }
                 }
             }
             $this->state['games'][$id] = $s;
@@ -79,7 +100,7 @@ class Monitor
     public function remind()
     {
         $cfg = Config::get();
-        if (!$cfg['monitor']['notifyUpcoming']) {
+        if (!$cfg['monitor']['notifyUpcoming'] || $cfg['monitor']['combineNext']) {
             return;
         }
         $now = Util::nowMs();

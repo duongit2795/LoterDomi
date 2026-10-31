@@ -51,6 +51,8 @@ class Config
                 'intervalSeconds' => 5,
                 'notifyResult' => true,
                 'notifyUpcoming' => true,
+                // Gửi kèm kế hoạch kỳ tiếp trong tin kết quả, không gửi tin nhắc riêng
+                'combineNext' => true,
                 'remindBeforeSeconds' => 30,
                 'requestTimeoutSeconds' => 15,
             ],
@@ -60,7 +62,8 @@ class Config
             ],
             'templates' => [
                 'result' => "🎯 <b>{game}</b> – Kỳ <code>{issue}</code>\nKết quả: <b>{result}</b>\n📋 Dàn {planCheck}: về <b>{playResult}</b> → {planStatus}",
-                'upcoming' => "⏰ <b>{game}</b>\nKỳ sắp mở: <code>{nextIssue}</code> – {nextTime} (còn {countdown})\n📋 Kế hoạch {play} {planRange}: <b>{plan}</b>",
+                'next' => "⏭ Kỳ tiếp <code>{nextIssue}</code> – {nextTime}\n📋 Kế hoạch {play} {planRange} (nuôi kỳ {planTurn}): <b>{plan}</b>",
+                'upcoming' => "⏰ <b>{game}</b>\nKỳ sắp mở: <code>{nextIssue}</code> – {nextTime} (còn {countdown})\n📋 Kế hoạch {play} {planRange} (nuôi kỳ {planTurn}): <b>{plan}</b>",
             ],
             'timezone' => 'Asia/Ho_Chi_Minh',
             'update' => [

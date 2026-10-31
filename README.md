@@ -3,7 +3,7 @@
 Bot Telegram theo dõi các game trên **vnlotteryplan.com** (Siêu Tốc 45s/1p/1.5p/2p/5p, M.Bắc 75s, M.Nam 45s, M.Trung 75s) và gửi:
 
 - 🎯 **Kết quả** kỳ vừa mở + dàn kế hoạch vừa đối chiếu (✅ trúng kỳ N / ❌ trượt / ⏳ đang nuôi)
-- ⏰ **Nhắc kỳ sắp mở** trước N giây + dàn kế hoạch mới
+- ⏭ **Kế hoạch kỳ tiếp** gửi kèm ngay trong tin kết quả (1 tin/kỳ). Có thể tắt gộp để gửi tin ⏰ nhắc kỳ sắp mở riêng trước N giây.
 
 Toàn bộ cấu hình nằm trong web admin. Không cần MySQL: dữ liệu lưu ở `data/` dạng file có chặn truy cập.
 
@@ -61,7 +61,7 @@ Admin → tab **Cập nhật** → **Kiểm tra cập nhật** → **Cập nhậ
 ## Mẫu tin nhắn
 
 Biến: `{game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}`.
-Riêng vnlotteryplan có thêm: `{play} {plan} {planRange} {planCheck} {playResult} {planStatus}`.
+Riêng vnlotteryplan có thêm: `{play} {plan} {planRange} {planTurn} {planCheck} {playResult} {planStatus}`.
 Dòng nào có biến mà tất cả đều rỗng sẽ tự bị bỏ.
 
 ## API vnlotteryplan.com

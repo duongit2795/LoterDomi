@@ -130,16 +130,18 @@ $logged = Auth::check();
         <div><label>Múi giờ</label><input id="m-tz"></div>
       </div>
       <label class="check"><input type="checkbox" id="m-result"> Báo kết quả khi có kỳ mới</label>
-      <label class="check"><input type="checkbox" id="m-upcoming"> Nhắc kỳ sắp mở</label>
+      <label class="check"><input type="checkbox" id="m-combine"> Gửi kèm kế hoạch kỳ tiếp trong tin kết quả (gộp 1 tin, không gửi tin nhắc riêng)</label>
+      <label class="check"><input type="checkbox" id="m-upcoming"> Nhắc kỳ sắp mở bằng tin riêng (chỉ dùng khi không gộp)</label>
     </div>
     <div class="card">
       <h2>Mẫu tin nhắn</h2>
       <p class="muted">Biến: {game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}<br>
-        Riêng vnlotteryplan: {play} kiểu chơi, {plan} dàn kế hoạch hiện tại, {planRange} khoảng kỳ, {planCheck} dàn vừa đối chiếu, {playResult} số về, {planStatus} trúng/trượt/đang nuôi.<br>
+        Riêng vnlotteryplan: {play} kiểu chơi, {plan} dàn kế hoạch kỳ tiếp, {planRange} khoảng kỳ, {planTurn} đang nuôi kỳ thứ mấy, {planCheck} dàn vừa đối chiếu, {playResult} số về, {planStatus} trúng/trượt/đang nuôi.<br>
         Dòng nào có biến mà tất cả đều rỗng sẽ tự bị bỏ.</p>
       <label>Báo kết quả</label><textarea id="tpl-result"></textarea>
       <button class="btn sec" onclick="preview('result')" style="margin-top:6px">Xem trước</button>
-      <label>Nhắc kỳ sắp mở</label><textarea id="tpl-upcoming"></textarea>
+      <label>Phần kỳ tiếp (nối vào cuối tin kết quả khi bật gộp)</label><textarea id="tpl-next"></textarea>
+      <label>Nhắc kỳ sắp mở (tin riêng)</label><textarea id="tpl-upcoming"></textarea>
       <button class="btn sec" onclick="preview('upcoming')" style="margin-top:6px">Xem trước</button>
       <pre id="tpl-preview" class="hidden"></pre>
     </div>
