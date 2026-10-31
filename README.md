@@ -32,6 +32,11 @@ Toàn bộ cấu hình nằm trong web admin. Không cần MySQL: dữ liệu l�
    ```
    Kể cả khi thiếu dòng này, các file dữ liệu vẫn không bị lộ nội dung.
 
+**Cron 5 giây qua link** (dịch vụ cron hỗ trợ chu kỳ giây): gọi
+`https://bot.example.com/worker.php?key=<cronKey>&mode=tick` mỗi 5 giây. Link đầy đủ có trong admin → Cập nhật → Hệ thống.
+Mỗi lần gọi chỉ chạy ~4 giây rồi thoát, trả lời ngay (PHP-FPM), nếu lần trước chưa xong thì bỏ qua – không chồng request.
+Dòng lệnh tương đương: `php worker.php --tick`.
+
 Chạy liên tục (không cần cron): dùng **Supervisor** của aaPanel với lệnh
 `php /www/wwwroot/bot.example.com/worker.php --daemon`, user `www`.
 

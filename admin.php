@@ -60,8 +60,10 @@ $logged = Auth::check();
       <h2>⚠ Worker chưa chạy</h2>
       <p>Tạo Cron trên aaPanel → <b>Cron</b> → <b>Add Cron</b>: Type = <b>Shell Script</b>, Period = <b>N Minutes, 1</b>, nội dung:</p>
       <code class="block" id="cron-cmd"></code>
-      <p class="muted">Hoặc Type = <b>Access URL</b>:</p>
+      <p class="muted">Hoặc gọi link mỗi 1 phút (Type = <b>Access URL</b>):</p>
       <code class="block" id="cron-url"></code>
+      <p class="muted">Hoặc gọi link <b>mỗi 5 giây</b> (chế độ tick – mỗi lần chạy ~4 giây, trả lời ngay, không bị chồng request):</p>
+      <code class="block" id="tick-url"></code>
     </div>
     <div class="card">
       <h2>Các kỳ</h2>

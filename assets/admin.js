@@ -241,11 +241,14 @@ async function loadSystem() {
   if (!s) return;
   $('cron-cmd').textContent = s.cronCommand;
   $('cron-url').textContent = s.cronUrl;
+  $('tick-url').textContent = s.tickUrl;
   $('v-cur').innerHTML = verText(s.version);
   $('sys').innerHTML = [
     ['Phiên bản app', esc(s.appVersion)], ['PHP', esc(s.php)],
     ['Worker', s.worker.alive ? `<span class="badge b-ok">Đang chạy (${esc(s.worker.mode)})</span>` : '<span class="badge b-err">Không chạy</span>'],
-    ['Lệnh cron', `<code>${esc(s.cronCommand)}</code>`],
+    ['Lệnh cron (1 phút)', `<code>${esc(s.cronCommand)}</code>`],
+    ['Link cron 1 phút', `<code>${esc(s.cronUrl)}</code>`],
+    ['Link cron 5 giây (tick)', `<code>${esc(s.tickUrl)}</code>`],
   ].map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
 }
 

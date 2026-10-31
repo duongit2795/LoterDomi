@@ -72,6 +72,7 @@ try {
             out([
                 'cronCommand' => "sudo -u $user php " . APP_DIR . '/worker.php',
                 'cronUrl' => "$base/worker.php?key=" . Config::get()['cronKey'],
+                'tickUrl' => "$base/worker.php?key=" . Config::get()['cronKey'] . '&mode=tick',
                 'php' => PHP_VERSION,
                 'appVersion' => APP_VERSION,
                 'version' => array_diff_key(Updater::current(), ['files' => 1]),

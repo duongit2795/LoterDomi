@@ -125,8 +125,10 @@ $cfg = is_installed() ? Config::get(true) : null;
     <code class="block">sudo -u <?= $h(site_user()) ?> php <?= $h(APP_DIR) ?>/worker.php</code>
     <p class="muted">Mỗi lần cron chạy, worker hoạt động ~55 giây nên các game 45 giây vẫn được báo kịp.
       Nếu trên aaPanel có nhiều bản PHP, thay <code>php</code> bằng đường dẫn đầy đủ, ví dụ <code>/www/server/php/82/bin/php</code>.</p>
-    <p class="muted">Không dùng được Shell Script? Chọn Type = <b>Access URL</b> với URL:</p>
+    <p class="muted">Không dùng được Shell Script? Chọn Type = <b>Access URL</b> (mỗi 1 phút) với URL:</p>
     <code class="block"><?= $h(base_url()) ?>/worker.php?key=<?= $h($cfg['cronKey']) ?></code>
+    <p class="muted">Muốn gọi link <b>mỗi 5 giây</b> (dịch vụ cron hỗ trợ giây), dùng chế độ tick:</p>
+    <code class="block"><?= $h(base_url()) ?>/worker.php?key=<?= $h($cfg['cronKey']) ?>&amp;mode=tick</code>
   </div>
   <div class="card">
     <h2>Bảo mật</h2>
