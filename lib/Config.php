@@ -60,6 +60,7 @@ class Config
                     'enabled' => true,
                     'winMin' => 4,      // 0 = không báo chuỗi thắng
                     'loseMin' => 4,     // 0 = không báo chuỗi thua
+                    'winMaxTurn' => 1,  // chỉ tính thắng khi trúng trong N kỳ đầu (1 = trúng ngay kỳ 1)
                     'targets' => [],    // vd "-1001234567890:461"; rỗng = không gửi
                 ],
                 'remindBeforeSeconds' => 30,

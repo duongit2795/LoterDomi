@@ -139,12 +139,13 @@ $logged = Auth::check();
     </div>
     <div class="card">
       <h2>Báo chuỗi thắng/thua liên tiếp</h2>
-      <p class="muted">Mỗi "ván" là một dàn kế hoạch đã kết thúc (✅ trúng / ❌ trượt). Khi chuỗi đạt ngưỡng, mỗi ván tiếp theo đều báo (vd ngưỡng 4: báo ở ván 4, 5, 6…).
+      <p class="muted">Mỗi "ván" là một dàn kế hoạch đã kết thúc. Thắng = trúng trong số kỳ đầu đã đặt (mặc định chỉ kỳ 1); trúng muộn hơn không tính thắng và làm đứt chuỗi. Thua = trượt cả dàn. Khi chuỗi đạt ngưỡng, mỗi ván tiếp theo đều báo (vd ngưỡng 4: báo ở ván 4, 5, 6…).
         Gán nhanh: vào chủ đề muốn nhận, gõ <code>/bind chuỗi</code>.</p>
       <label class="check"><input type="checkbox" id="st-enabled"> Bật báo chuỗi</label>
       <div class="grid">
         <div><label>Thắng liên tiếp từ (ván) – 0 = tắt</label><input id="st-win" type="number" min="0"></div>
         <div><label>Thua liên tiếp từ (ván) – 0 = tắt</label><input id="st-lose" type="number" min="0"></div>
+        <div><label>Tính là thắng khi trúng trong … kỳ đầu (1 = chỉ trúng ngay kỳ 1)</label><input id="st-turn" type="number" min="1" max="5"></div>
       </div>
       <label>Gửi tới (chat_id:chủ_đề_id, cách nhau bởi dấu phẩy)</label>
       <input id="st-targets" placeholder="vd: -1001234567890:461">

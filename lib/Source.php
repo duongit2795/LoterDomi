@@ -209,29 +209,54 @@ class Source
         ] + self::streak($rows, $hit);
     }
 
+    // Phân loại dàn đã kết thúc: win = trúng trong winMaxTurn kỳ đầu, lose = trượt,
+    // late = trúng muộn hơn (không tính thắng, làm đứt chuỗi), null = đang nuôi
+    private static function planOutcome(array $r, $winMaxTurn)
+    {
+        $ws = isset($r['winStatus']) ? (int) $r['winStatus'] : 2;
+        if ($ws === 0) {
+            return 'lose';
+        }
+        if ($ws === 1) {
+            $turn = isset($r['currentTurnSort']) ? (int) $r['currentTurnSort'] : 1;
+            return $turn <= $winMaxTurn ? 'win' : 'late';
+        }
+        return null;
+    }
+
     // Chuỗi thắng/thua liên tiếp của các dàn đã kết thúc (mới nhất trước).
     // streakNew = kỳ vừa mở làm kết thúc một dàn (chuỗi vừa thay đổi).
     private static function streak(array $rows, $hit)
     {
+        $winMaxTurn = max(1, (int) Config::get()['monitor']['streak']['winMaxTurn']);
         $type = null;
         $count = 0;
+        $completed = 0;
+        $broken = false;
         foreach ($rows as $r) {
-            $ws = isset($r['winStatus']) ? (int) $r['winStatus'] : 2;
-            if ($ws === 2) {
+            $o = self::planOutcome($r, $winMaxTurn);
+            if ($o === null) {
+                continue;
+            }
+            $completed++;
+            if ($broken) {
                 continue;
             }
             if ($type === null) {
-                $type = $ws;
-            } elseif ($ws !== $type) {
-                break;
+                $type = $o;
+            }
+            if ($o !== $type || $o === 'late') {
+                $broken = true;
+                continue;
             }
             $count++;
         }
-        $completed = count(array_filter($rows, function ($r) {
-            return isset($r['winStatus']) && (int) $r['winStatus'] !== 2;
-        }));
+        if ($type === 'late') {
+            $type = null;
+            $count = 0;
+        }
         return [
-            'streakType' => $type === null ? '' : ($type === 1 ? 'win' : 'lose'),
+            'streakType' => $type === null ? '' : $type,
             'streakCount' => $count,
             // Cả lịch sử tải về đều cùng một chuỗi: thực tế có thể dài hơn
             'streakLabel' => $count && $count === $completed ? "$count+" : (string) $count,
