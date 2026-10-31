@@ -44,6 +44,13 @@ try {
             }
             out(History::list($gameId, (int) ($_GET['page'] ?? 1)) + ['stats' => History::stats($gameId)]);
 
+        case 'GET daily':
+            $gameId = (string) ($_GET['game'] ?? '');
+            if (!in_array($gameId, array_column(Monitor::activeGames(), 'id'), true)) {
+                throw new RuntimeException('Game không hợp lệ');
+            }
+            out(['days' => History::daily($gameId, (int) ($_GET['days'] ?? 14))]);
+
         case 'POST change-password':
             Member::changePassword($me['id'], (string) ($body['current'] ?? ''), (string) ($body['new'] ?? ''));
             out(['ok' => true]);

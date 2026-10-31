@@ -80,7 +80,8 @@ Ngưỡng thắng / thua chỉnh riêng (0 = tắt). Bot đếm trên 30 dàn g�
 ## Thành viên (/member)
 
 Trang `https://<domain>/member/` cho thành viên: đăng ký / đăng nhập, **Bảng kỳ** (kỳ vừa mở, dàn vừa đối chiếu,
-kế hoạch kỳ tiếp, đếm ngược, chuỗi thắng/thua – tự cập nhật), **Lịch sử** từng game kèm thống kê trúng kỳ 1 / trúng muộn / trượt,
+kế hoạch kỳ tiếp, đếm ngược, chuỗi thắng/thua – tự cập nhật), **Lịch sử** từng game kèm thống kê trúng kỳ 1 / trúng muộn / trượt, biểu đồ theo ngày (7/14/30 ngày: số dàn mỗi ngày
+và % trúng ngay kỳ 1, có bảng số liệu),
 và đổi mật khẩu.
 
 Cần MySQL/MariaDB:

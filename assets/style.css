@@ -1,5 +1,5 @@
-:root { --bg:#f5f6f8; --card:#fff; --text:#1d2330; --muted:#6b7280; --border:#e3e6eb; --primary:#2563eb; --ok:#16a34a; --err:#dc2626; --warn:#d97706; }
-@media (prefers-color-scheme: dark) { :root { --bg:#0f141b; --card:#18202b; --text:#e5e9f0; --muted:#94a3b8; --border:#2a3442; --primary:#3b82f6; } }
+:root { --c-good:#0ca30c; --c-warn:#fab219; --c-bad:#d03b3b; --c-line:#2a78d6; --grid:#e1e0d9; --axis:#c3c2b7; --bg:#f5f6f8; --card:#fff; --text:#1d2330; --muted:#6b7280; --border:#e3e6eb; --primary:#2563eb; --ok:#16a34a; --err:#dc2626; --warn:#d97706; }
+@media (prefers-color-scheme: dark) { :root { --c-line:#3987e5; --grid:#2c2c2a; --axis:#383835; --bg:#0f141b; --card:#18202b; --text:#e5e9f0; --muted:#94a3b8; --border:#2a3442; --primary:#3b82f6; } }
 * { box-sizing:border-box; }
 body { margin:0; font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
 header { display:flex; align-items:center; gap:16px; padding:12px 20px; background:var(--card); border-bottom:1px solid var(--border); flex-wrap:wrap; }
@@ -42,3 +42,16 @@ pre, code.block { display:block; background:var(--bg); border:1px solid var(--bo
 #toast.show { opacity:1; } #toast.err { background:var(--err); }
 .game { border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px; }
 .log-warn { color:var(--warn); } .log-error { color:var(--err); }
+
+/* Biểu đồ */
+.chart { position:relative; width:100%; }
+.chart svg { display:block; width:100%; height:auto; overflow:visible; }
+.chart text { fill:var(--muted); font-size:11px; }
+.chart .hit { fill:transparent; cursor:default; }
+.chart .hit:hover { fill:color-mix(in srgb,var(--text) 6%,transparent); }
+.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin:4px 0 8px; }
+.legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+.legend i.line { height:2px; border-radius:1px; vertical-align:3px; width:14px; }
+.tip { position:absolute; pointer-events:none; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px; box-shadow:0 4px 14px rgba(0,0,0,.12); white-space:nowrap; z-index:5; }
+.tip b { color:var(--text); }
+.chart-title { font-size:13px; font-weight:600; margin:14px 0 2px; }

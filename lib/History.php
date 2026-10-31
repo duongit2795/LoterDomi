@@ -12,12 +12,14 @@ class History
         try {
             Db::query('INSERT IGNORE INTO draws (game_id, game_name, issue, result, play, plan_check, play_result, plan_status,
                     win_status, hit_turn, next_issue, next_plan, next_range, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())', [
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
                 $game['id'], $game['name'], $s['issue'], $s['result'],
                 $s['play'] ?? '', $s['planCheck'] ?? '', $s['playResult'] ?? '', $s['planStatus'] ?? '',
                 isset($s['hitStatus']) && $s['hitStatus'] !== '' ? (int) $s['hitStatus'] : null,
                 isset($s['hitTurn']) && $s['hitTurn'] !== '' ? (int) $s['hitTurn'] : null,
                 $s['nextIssue'] ?? '', $s['plan'] ?? '', $s['planRange'] ?? '',
+                // Giờ theo múi giờ của app (VN), không phụ thuộc múi giờ MySQL
+                date('Y-m-d H:i:s'),
             ]);
             self::$lastError = '';
         } catch (Exception $e) {
@@ -39,6 +41,29 @@ class History
                 next_issue, next_plan, next_range, created_at
             FROM draws WHERE game_id = ? ORDER BY id DESC LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage), [$gameId]);
         return ['rows' => $rows, 'total' => $total, 'page' => $page, 'perPage' => $perPage];
+    }
+
+    // Số dàn kết thúc theo từng ngày (N ngày gần nhất, kể cả ngày không có dữ liệu)
+    public static function daily($gameId, $days = 14)
+    {
+        $days = min(90, max(1, (int) $days));
+        $from = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+        $rows = Db::all("SELECT DATE(created_at) d,
+                SUM(win_status = 1 AND COALESCE(hit_turn, 1) <= 1) win1,
+                SUM(win_status = 1 AND hit_turn > 1) late,
+                SUM(win_status = 0) lose
+            FROM draws WHERE game_id = ? AND win_status IN (0, 1) AND created_at >= ?
+            GROUP BY DATE(created_at)", [$gameId, $from . ' 00:00:00']);
+        $byDay = [];
+        foreach ($rows as $r) {
+            $byDay[$r['d']] = ['win1' => (int) $r['win1'], 'late' => (int) $r['late'], 'lose' => (int) $r['lose']];
+        }
+        $out = [];
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $d = date('Y-m-d', strtotime("-$i days"));
+            $out[] = ['day' => $d] + ($byDay[$d] ?? ['win1' => 0, 'late' => 0, 'lose' => 0]);
+        }
+        return $out;
     }
 
     // Thống kê các dàn đã kết thúc trong N kỳ gần nhất

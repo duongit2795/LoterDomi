@@ -116,10 +116,34 @@ $allowRegister = $enabled && Config::get()['members']['allowRegister'];
   <section data-page="history" class="hidden">
     <div class="card">
       <div class="row" style="margin-top:0">
-        <select id="h-game" style="max-width:260px" onchange="loadHistory(1)"></select>
+        <select id="h-game" style="max-width:260px" onchange="loadHistory(1); loadDaily()"></select>
         <span id="h-stats" class="muted"></span>
       </div>
-      <div style="overflow-x:auto;margin-top:12px">
+    </div>
+    <div class="card">
+      <div class="row" style="margin-top:0;justify-content:space-between">
+        <h2 style="margin:0">Tỉ lệ trúng theo ngày</h2>
+        <div class="row" style="margin:0">
+          <select id="d-days" style="width:auto" onchange="loadDaily()">
+            <option value="7">7 ngày</option><option value="14" selected>14 ngày</option><option value="30">30 ngày</option>
+          </select>
+          <button class="btn sec" onclick="toggleDailyTable()">Bảng số liệu</button>
+        </div>
+      </div>
+      <div class="chart-title">Số dàn kết thúc mỗi ngày</div>
+      <div class="legend">
+        <span><i style="background:var(--c-good)"></i>✅ Trúng kỳ 1</span>
+        <span><i style="background:var(--c-warn)"></i>⏳ Trúng muộn</span>
+        <span><i style="background:var(--c-bad)"></i>❌ Trượt</span>
+      </div>
+      <div class="chart" id="d-bars"></div>
+      <div class="chart-title">% dàn trúng ngay kỳ 1</div>
+      <div class="chart" id="d-rate"></div>
+      <div id="d-table" class="hidden" style="overflow-x:auto;margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h2>Lịch sử kỳ</h2>
+      <div style="overflow-x:auto">
         <table>
           <thead><tr><th>Kỳ</th><th>Kết quả</th><th>Dàn</th><th>Về</th><th>Trạng thái</th><th>Kế hoạch kỳ tiếp</th><th>Lúc</th></tr></thead>
           <tbody id="h-rows"></tbody>
