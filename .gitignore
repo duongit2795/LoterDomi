@@ -1,3 +1,4 @@
 data/*
 !data/.htaccess
 !data/index.html
+dist/
