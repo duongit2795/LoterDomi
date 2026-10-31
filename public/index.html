@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoterDomi Admin</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --text:#1d2330; --muted:#6b7280; --border:#e3e6eb; --primary:#2563eb; --ok:#16a34a; --err:#dc2626; --warn:#d97706; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f141b; --card:#18202b; --text:#e5e9f0; --muted:#94a3b8; --border:#2a3442; --primary:#3b82f6; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  header { display:flex; align-items:center; gap:16px; padding:12px 20px; background:var(--card); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; }
+  nav { display:flex; gap:4px; flex-wrap:wrap; }
+  nav button { background:none; border:0; color:var(--muted); padding:6px 12px; border-radius:6px; cursor:pointer; font:inherit; }
+  nav button.active { background:var(--primary); color:#fff; }
+  main { max-width:1100px; margin:20px auto; padding:0 16px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-size:16px; margin:0 0 12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+  label { display:block; font-size:12px; color:var(--muted); margin:8px 0 4px; }
+  input,select,textarea { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); font:inherit; }
+  textarea { min-height:80px; font-family:ui-monospace,Menlo,monospace; font-size:12px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  .check { display:flex; align-items:center; gap:6px; margin-top:8px; }
+  .check input { width:auto; }
+  button.btn { background:var(--primary); color:#fff; border:0; padding:8px 14px; border-radius:6px; cursor:pointer; font:inherit; }
+  button.btn.sec { background:transparent; color:var(--text); border:1px solid var(--border); }
+  button.btn.danger { background:var(--err); }
+  table { width:100%; border-collapse:collapse; }
+  th,td { text-align:left; padding:8px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--muted); font-weight:500; font-size:12px; }
+  .badge { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; }
+  .b-ok { background:color-mix(in srgb,var(--ok) 18%,transparent); color:var(--ok); }
+  .b-err { background:color-mix(in srgb,var(--err) 18%,transparent); color:var(--err); }
+  .b-off { background:color-mix(in srgb,var(--muted) 18%,transparent); color:var(--muted); }
+  pre { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px; overflow:auto; max-height:360px; font-size:12px; white-space:pre-wrap; word-break:break-all; }
+  .muted { color:var(--muted); font-size:12px; }
+  .hidden { display:none !important; }
+  .stat { font-size:24px; font-weight:600; }
+  #toast { position:fixed; bottom:20px; right:20px; padding:10px 16px; border-radius:8px; color:#fff; background:var(--ok); opacity:0; transition:opacity .2s; pointer-events:none; }
+  #toast.show { opacity:1; } #toast.err { background:var(--err); }
+  #login { max-width:340px; margin:15vh auto; }
+  .game { border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px; }
+  .log-warn { color:var(--warn); } .log-error { color:var(--err); }
+</style>
+</head>
+<body>
+
+<div id="login" class="card hidden">
+  <h2>Đăng nhập Admin</h2>
+  <label>Mật khẩu</label>
+  <input id="pw" type="password" autofocus>
+  <div class="row"><button class="btn" onclick="login()">Đăng nhập</button></div>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>🎲 LoterDomi</h1>
+    <nav id="tabs">
+      <button data-tab="dash" class="active">Tổng quan</button>
+      <button data-tab="games">Nguồn API</button>
+      <button data-tab="tele">Telegram</button>
+      <button data-tab="settings">Cài đặt</button>
+      <button data-tab="logs">Nhật ký</button>
+    </nav>
+    <span style="flex:1"></span>
+    <button class="btn sec" onclick="logout()">Đăng xuất</button>
+  </header>
+
+  <main>
+    <!-- Tổng quan -->
+    <section data-page="dash">
+      <div class="grid">
+        <div class="card"><div class="muted">Trạng thái theo dõi</div><div class="stat" id="s-monitor">–</div></div>
+        <div class="card"><div class="muted">Số chat nhận tin</div><div class="stat" id="s-subs">–</div></div>
+        <div class="card"><div class="muted">Game đang bật</div><div class="stat" id="s-games">–</div></div>
+      </div>
+      <div class="card">
+        <h2>Các phiên</h2>
+        <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Game</th><th>Phiên gần nhất</th><th>Kết quả</th><th>Phiên sắp tới</th><th>Còn lại</th><th>Trạng thái</th></tr></thead>
+          <tbody id="t-games"></tbody>
+        </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Nguồn API -->
+    <section data-page="games" class="hidden">
+      <div class="card">
+        <h2>Nguồn API theo game</h2>
+        <p class="muted">Mỗi game là một endpoint JSON (lấy từ tab Network của DevTools khi mở trang mobile.html).
+          Đường dẫn trường dạng <code>data.list[0].issue</code>. URL có thể chứa <code>{ts}</code> để chèn timestamp.
+          Bấm <b>Thử gọi API</b> để xem JSON thô và giá trị trích xuất.</p>
+        <div id="games"></div>
+        <div class="row">
+          <button class="btn sec" onclick="addGame()">+ Thêm game</button>
+          <button class="btn" onclick="saveGames()">Lưu</button>
+        </div>
+      </div>
+      <div class="card hidden" id="test-box">
+        <h2>Kết quả thử</h2>
+        <label>Giá trị trích xuất</label><pre id="test-ext"></pre>
+        <label>JSON thô</label><pre id="test-raw"></pre>
+      </div>
+    </section>
+
+    <!-- Telegram -->
+    <section data-page="tele" class="hidden">
+      <div class="card">
+        <h2>Bot Telegram</h2>
+        <label>Bot token (lấy từ @BotFather)</label>
+        <input id="tg-token" type="password" placeholder="123456:ABC...">
+        <label>Chat ID nhận thông báo (mỗi dòng 1 id; nhóm/kênh thường bắt đầu bằng -100)</label>
+        <textarea id="tg-chats"></textarea>
+        <div class="check"><input type="checkbox" id="tg-sub"><span>Cho phép người dùng tự đăng ký bằng /subscribe</span></div>
+        <label>Parse mode</label>
+        <select id="tg-parse"><option value="HTML">HTML</option><option value="">Văn bản thường</option></select>
+        <div class="row">
+          <button class="btn" onclick="saveTele()">Lưu</button>
+          <button class="btn sec" onclick="botInfo()">Kiểm tra token</button>
+          <button class="btn sec" onclick="testSend()">Gửi tin thử</button>
+          <span id="bot-info" class="muted"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cài đặt -->
+    <section data-page="settings" class="hidden">
+      <div class="card">
+        <h2>Theo dõi</h2>
+        <div class="check"><input type="checkbox" id="m-enabled"><span><b>Bật theo dõi & gửi thông báo</b></span></div>
+        <div class="grid">
+          <div><label>Chu kỳ gọi API (giây)</label><input id="m-interval" type="number" min="2"></div>
+          <div><label>Nhắc trước khi mở thưởng (giây)</label><input id="m-remind" type="number" min="0"></div>
+          <div><label>Timeout request (giây)</label><input id="m-timeout" type="number" min="1"></div>
+          <div><label>Múi giờ</label><input id="m-tz"></div>
+        </div>
+        <div class="check"><input type="checkbox" id="m-result"><span>Báo kết quả khi có phiên mới</span></div>
+        <div class="check"><input type="checkbox" id="m-upcoming"><span>Nhắc phiên sắp tới</span></div>
+      </div>
+      <div class="card">
+        <h2>Mẫu tin nhắn</h2>
+        <p class="muted">Biến: {game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}</p>
+        <label>Báo kết quả</label><textarea id="tpl-result"></textarea>
+        <button class="btn sec" onclick="preview('result')" style="margin-top:6px">Xem trước</button>
+        <label>Nhắc phiên sắp tới</label><textarea id="tpl-upcoming"></textarea>
+        <button class="btn sec" onclick="preview('upcoming')" style="margin-top:6px">Xem trước</button>
+        <pre id="tpl-preview" class="hidden"></pre>
+      </div>
+      <div class="card">
+        <h2>Header chung cho mọi request (JSON)</h2>
+        <textarea id="g-headers"></textarea>
+      </div>
+      <button class="btn" onclick="saveSettings()">Lưu cài đặt</button>
+    </section>
+
+    <!-- Nhật ký -->
+    <section data-page="logs" class="hidden">
+      <div class="card"><h2>Nhật ký</h2><pre id="logs" style="max-height:70vh"></pre></div>
+    </section>
+  </main>
+</div>
+<div id="toast"></div>
+
+<script>
+let cfg = null;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+function toast(msg, err) {
+  const t = $('toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = '', 2500);
+}
+
+async function api(path, method = 'GET', body) {
+  const r = await fetch('/api' + path, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && path !== '/login') { showLogin(); throw new Error('Chưa đăng nhập'); }
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+
+function showLogin() { $('app').classList.add('hidden'); $('login').classList.remove('hidden'); }
+async function login() {
+  try { await api('/login', 'POST', { password: $('pw').value }); boot(); } catch (e) { toast(e.message, true); }
+}
+$('pw').addEventListener('keydown', (e) => e.key === 'Enter' && login());
+async function logout() { await api('/logout', 'POST'); showLogin(); }
+
+document.querySelectorAll('#tabs button').forEach((b) => b.onclick = () => {
+  document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('active', x === b));
+  document.querySelectorAll('[data-page]').forEach((p) => p.classList.toggle('hidden', p.dataset.page !== b.dataset.tab));
+});
+
+async function boot() {
+  try { cfg = await api('/config'); } catch { return; }
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  fill(); refresh();
+}
+
+function fill() {
+  $('tg-token').value = cfg.telegram.token;
+  $('tg-chats').value = cfg.telegram.chatIds.join('\n');
+  $('tg-sub').checked = cfg.telegram.allowSubscribe;
+  $('tg-parse').value = cfg.telegram.parseMode;
+  const m = cfg.monitor;
+  $('m-enabled').checked = m.enabled; $('m-interval').value = m.intervalSeconds; $('m-remind').value = m.remindBeforeSeconds;
+  $('m-timeout').value = m.requestTimeoutSeconds; $('m-tz').value = cfg.timezone;
+  $('m-result').checked = m.notifyResult; $('m-upcoming').checked = m.notifyUpcoming;
+  $('tpl-result').value = cfg.templates.result; $('tpl-upcoming').value = cfg.templates.upcoming;
+  $('g-headers').value = JSON.stringify(cfg.globalHeaders, null, 2);
+  renderGames();
+}
+
+// ---- Games ----
+const PATHS = [['issue','Mã phiên vừa mở'],['result','Kết quả'],['nextIssue','Mã phiên sắp tới'],['nextTime','Thời gian mở phiên sắp tới']];
+function renderGames() {
+  $('games').innerHTML = cfg.games.map((g, i) => `
+    <div class="game" data-i="${i}">
+      <div class="grid">
+        <div><label>Tên game</label><input data-f="name" value="${esc(g.name)}"></div>
+        <div><label>Method</label><select data-f="method">${['GET','POST'].map((m) => `<option ${g.method===m?'selected':''}>${m}</option>`).join('')}</select></div>
+        <div><label>Kiểu thời gian</label><select data-f="timeMode">${[['auto','Tự nhận'],['seconds','Unix giây'],['milliseconds','Unix ms'],['remaining','Số giây còn lại']].map(([v,l]) => `<option value="${v}" ${g.timeMode===v?'selected':''}>${l}</option>`).join('')}</select></div>
+      </div>
+      <label>URL API</label><input data-f="url" value="${esc(g.url)}" placeholder="https://www.vnlotteryplan.com/api/...">
+      <div class="grid">${PATHS.map(([k,l]) => `<div><label>${l}</label><input data-p="${k}" value="${esc(g.paths[k])}" placeholder="vd: data.${k}"></div>`).join('')}</div>
+      <div class="grid">
+        <div><label>Headers riêng (JSON)</label><textarea data-f="headers">${esc(JSON.stringify(g.headers || {}, null, 2))}</textarea></div>
+        <div><label>Body (cho POST)</label><textarea data-f="body">${esc(g.body)}</textarea></div>
+      </div>
+      <div class="row">
+        <label class="check" style="margin:0"><input type="checkbox" data-f="enabled" ${g.enabled?'checked':''}> Bật</label>
+        <button class="btn sec" onclick="testGame(${i})">Thử gọi API</button>
+        <button class="btn danger" onclick="removeGame(${i})">Xoá</button>
+      </div>
+    </div>`).join('') || '<p class="muted">Chưa có game nào.</p>';
+}
+
+function readGames() {
+  document.querySelectorAll('.game').forEach((el) => {
+    const g = cfg.games[el.dataset.i];
+    el.querySelectorAll('[data-f]').forEach((inp) => {
+      const f = inp.dataset.f;
+      if (f === 'enabled') g.enabled = inp.checked;
+      else if (f === 'headers') {
+        try { g.headers = JSON.parse(inp.value || '{}'); } catch { throw new Error(`Headers của "${g.name}" không phải JSON hợp lệ`); }
+      } else g[f] = inp.value.trim();
+    });
+    el.querySelectorAll('[data-p]').forEach((inp) => g.paths[inp.dataset.p] = inp.value.trim());
+  });
+}
+
+function addGame() {
+  try { readGames(); } catch (e) { return toast(e.message, true); }
+  cfg.games.push({ name: 'Game mới', enabled: true, url: '', method: 'GET', headers: {}, body: '', timeMode: 'auto', paths: { issue:'', result:'', nextIssue:'', nextTime:'' } });
+  renderGames();
+}
+function removeGame(i) {
+  if (!confirm('Xoá game này?')) return;
+  try { readGames(); } catch {}
+  cfg.games.splice(i, 1); renderGames();
+}
+async function saveGames() {
+  try { readGames(); cfg = await api('/config', 'PUT', { games: cfg.games }); renderGames(); toast('Đã lưu'); } catch (e) { toast(e.message, true); }
+}
+async function testGame(i) {
+  try {
+    readGames();
+    const r = await api('/test-fetch', 'POST', { game: cfg.games[i] });
+    $('test-box').classList.remove('hidden');
+    const ex = { ...r.extracted, nextTimeText: r.extracted.nextTime ? new Date(r.extracted.nextTime).toLocaleString('vi-VN') : null };
+    $('test-ext').textContent = JSON.stringify(ex, null, 2);
+    $('test-raw').textContent = JSON.stringify(r.raw, null, 2);
+    $('test-box').scrollIntoView({ behavior: 'smooth' });
+  } catch (e) { toast(e.message, true); }
+}
+
+// ---- Telegram ----
+async function saveTele() {
+  try {
+    cfg = await api('/config', 'PUT', { telegram: {
+      token: $('tg-token').value.trim(),
+      chatIds: $('tg-chats').value.split(/[\s,]+/).filter(Boolean),
+      allowSubscribe: $('tg-sub').checked,
+      parseMode: $('tg-parse').value,
+    } });
+    toast('Đã lưu');
+  } catch (e) { toast(e.message, true); }
+}
+async function botInfo() {
+  try { const b = await api('/bot-info', 'POST', { token: $('tg-token').value.trim() }); $('bot-info').textContent = `✅ @${b.username} (${b.first_name})`; }
+  catch (e) { $('bot-info').textContent = '❌ ' + e.message; }
+}
+async function testSend() {
+  try { await api('/test-send', 'POST', {}); toast('Đã gửi tin thử'); } catch (e) { toast(e.message, true); }
+}
+
+// ---- Settings ----
+async function saveSettings() {
+  let headers;
+  try { headers = JSON.parse($('g-headers').value || '{}'); } catch { return toast('Header chung không phải JSON hợp lệ', true); }
+  try {
+    cfg = await api('/config', 'PUT', {
+      monitor: {
+        enabled: $('m-enabled').checked, intervalSeconds: +$('m-interval').value || 10,
+        remindBeforeSeconds: +$('m-remind').value || 0, requestTimeoutSeconds: +$('m-timeout').value || 15,
+        notifyResult: $('m-result').checked, notifyUpcoming: $('m-upcoming').checked,
+      },
+      timezone: $('m-tz').value.trim() || 'Asia/Ho_Chi_Minh',
+      templates: { result: $('tpl-result').value, upcoming: $('tpl-upcoming').value },
+      globalHeaders: headers,
+    });
+    toast('Đã lưu');
+  } catch (e) { toast(e.message, true); }
+}
+async function preview(kind) {
+  await saveSettings();
+  const r = await api('/preview', 'POST', { kind, gameId: cfg.games[0]?.id });
+  $('tpl-preview').classList.remove('hidden'); $('tpl-preview').textContent = r.text;
+}
+
+// ---- Dashboard ----
+function countdown(ms) {
+  if (ms == null) return '';
+  const s = Math.max(0, Math.round(ms / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+  return (h ? h + 'h ' : '') + (h || m ? m + 'p ' : '') + (s % 60) + 's';
+}
+let status = null, skew = 0;
+async function refresh() {
+  try { status = await api('/status'); skew = status.serverTime - Date.now(); } catch { return; }
+  $('s-monitor').innerHTML = status.monitorEnabled ? '<span class="badge b-ok">Đang chạy</span>' : '<span class="badge b-off">Tắt</span>';
+  $('s-subs').textContent = status.subscribers;
+  $('s-games').textContent = status.games.filter((g) => g.enabled).length + ' / ' + status.games.length;
+  $('logs').innerHTML = status.logs.map((l) => `<span class="log-${l.level}">${new Date(l.time).toLocaleString('vi-VN')} [${l.level}] ${esc(l.msg)}</span>`).join('\n');
+  renderDash();
+}
+function renderDash() {
+  if (!status) return;
+  const now = Date.now() + skew;
+  $('t-games').innerHTML = status.games.map((g) => {
+    const s = g.state || {};
+    const st = !g.enabled ? '<span class="badge b-off">Tắt</span>' : s.lastError ? `<span class="badge b-err" title="${esc(s.lastError)}">Lỗi</span>` : s.lastFetch ? '<span class="badge b-ok">OK</span>' : '<span class="badge b-off">Chờ</span>';
+    return `<tr><td>${esc(g.name)}</td><td>${esc(s.issue)}</td><td><b>${esc(s.result)}</b></td><td>${esc(s.nextIssue)}<div class="muted">${s.nextTime ? new Date(s.nextTime).toLocaleTimeString('vi-VN') : ''}</div></td><td>${s.nextTime ? countdown(s.nextTime - now) : ''}</td><td>${st}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="muted">Chưa có game. Thêm ở tab "Nguồn API".</td></tr>';
+}
+setInterval(refresh, 5000);
+setInterval(renderDash, 1000);
+boot();
+</script>
+</body>
+</html>
