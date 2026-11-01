@@ -67,5 +67,23 @@
     resizeTimer = setTimeout(() => document.querySelectorAll('.road-wrap').forEach((w) => { w.scrollLeft = w.scrollWidth; }), 150);
   });
 
-  window.RoadView = { render, layout };
+  // Theo dõi cache/ver.json (worker ghi mỗi khi có kỳ mới): kiểm tra mỗi giây, có thay đổi mới gọi reload().
+  // File tĩnh nên rất nhẹ; nếu chưa có file thì tự tải lại mỗi 15 giây.
+  function live(verUrl, reload, isActive) {
+    let last = null, lastLoad = Date.now();
+    setInterval(async () => {
+      if (isActive && !isActive()) return;
+      try {
+        const r = await fetch(verUrl + '?t=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error();
+        const v = (await r.json()).v;
+        if (last !== null && v !== last) { lastLoad = Date.now(); reload(); }
+        last = v;
+      } catch {
+        if (Date.now() - lastLoad > 15000) { lastLoad = Date.now(); reload(); }
+      }
+    }, 1000);
+  }
+
+  window.RoadView = { render, layout, live };
 })();

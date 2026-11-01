@@ -73,6 +73,9 @@ do {
             if ($now - (int) $monitor->get('lastPoll', 0) >= $interval - 1000) {
                 $monitor->set('lastPoll', $now);
                 $monitor->poll();
+            } elseif ($due = $monitor->dueIds()) {
+                // Quanh giờ mở thưởng: gọi API mỗi giây cho riêng game đó để báo kết quả sớm nhất
+                $monitor->poll($due);
             }
             $monitor->remind();
         }

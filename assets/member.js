@@ -215,17 +215,14 @@ let resizeTimer;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderDaily, 150); });
 
 // ---- Bảng cầu WIN / LOST (vẽ bằng assets/road.js) ----
-let roadTimer = null;
-
 async function loadRoad() {
-  clearTimeout(roadTimer);
   try {
     const r = await api('road&limit=' + $('road-limit').value);
     RoadView.render($('roads'), r.games);
   } catch (e) { toast(e.message, true); }
-  // Tự làm mới khi đang mở tab Cầu
-  if (!document.querySelector('[data-page="road"]').classList.contains('hidden')) roadTimer = setTimeout(loadRoad, 15000);
 }
+// Có kỳ mới là tải lại ngay khi đang mở tab Cầu
+RoadView.live('../cache/ver.json', loadRoad, () => !document.querySelector('[data-page="road"]').classList.contains('hidden'));
 
 // ---- Tài khoản ----
 async function changePassword(btn) {

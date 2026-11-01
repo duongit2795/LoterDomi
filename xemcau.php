@@ -68,16 +68,14 @@ $qs = function (array $extra) use ($key, $gameId) {
         </select>
       </div>
     </div>
-    <p class="muted" style="margin:8px 0 0">Mỗi ô là một kỳ: W nếu dàn kế hoạch đang nuôi trúng ở kỳ đó, L nếu không trúng. Cùng kết quả xếp xuống cùng cột, đổi kết quả thì sang cột mới. Tự cập nhật mỗi 15 giây.</p>
+    <p class="muted" style="margin:8px 0 0">Mỗi ô là một kỳ: W nếu dàn kế hoạch đang nuôi trúng ở kỳ đó, L nếu không trúng. Cùng kết quả xếp xuống cùng cột, đổi kết quả thì sang cột mới. Tự cập nhật ngay khi có kỳ mới.</p>
   </div>
   <div id="roads"></div>
 </main>
 <script src="assets/road.js?v=<?= $h(APP_VERSION) ?>"></script>
 <script>
 const params = new URLSearchParams(location.search);
-let timer = null;
 async function load() {
-  clearTimeout(timer);
   params.set('json', '1');
   params.set('limit', document.getElementById('limit').value);
   try {
@@ -88,9 +86,10 @@ async function load() {
   } catch (e) {
     document.getElementById('updated').textContent = 'Lỗi tải dữ liệu: ' + e.message;
   }
-  timer = setTimeout(load, 15000);
 }
 load();
+// Có kỳ mới là tải lại ngay (kiểm tra mỗi giây)
+RoadView.live('cache/ver.json', load);
 </script>
 <?php endif; ?>
 </body>

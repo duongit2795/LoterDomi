@@ -91,8 +91,9 @@ Tab Lịch sử (cần database) cũng thống kê và vẽ biểu đồ theo W/
 
 ## Trang xem cầu công khai (/xemcau.php)
 
-`https://<domain>/xemcau.php` – ai có link là xem được bảng cầu W/L của tất cả game, không cần đăng nhập, tự cập nhật
-15 giây. Lọc 1 game: thêm `?game=<id>` (chọn trong ô trên trang). Admin → Cài đặt → **Trang xem cầu công khai**:
+`https://<domain>/xemcau.php` – ai có link là xem được bảng cầu W/L của tất cả game, không cần đăng nhập, cập nhật
+**cùng lúc với tin Telegram**: worker ghi `cache/ver.json` (file tĩnh rất nhỏ) ngay trước khi gửi tin, trang kiểm tra file này
+mỗi giây và chỉ tải lại dữ liệu khi có thay đổi. Lọc 1 game: thêm `?game=<id>` (chọn trong ô trên trang). Admin → Cài đặt → **Trang xem cầu công khai**:
 bật/tắt và đặt **mã truy cập** (tuỳ chọn) – khi có mã, link phải dạng `xemcau.php?k=<mã>`; đổi mã là link cũ hết hiệu lực.
 
 Cần MySQL/MariaDB:
@@ -105,6 +106,12 @@ Mật khẩu database chỉ lưu trong `data/config.php` trên server (không đ
 
 Tab **Thành viên** trong admin: bật/tắt tự đăng ký, bắt buộc duyệt tài khoản mới, tìm kiếm, duyệt / khoá / mở khoá,
 đặt lại mật khẩu, xoá, thêm thành viên thủ công. Lịch sử kỳ được lưu vào bảng `draws` từ lúc bật database.
+
+## Độ trễ
+
+Quanh giờ mở thưởng của từng game, worker gọi API **mỗi giây** cho riêng game đó (các game khác vẫn theo chu kỳ thường),
+nên tin Telegram đi ra chưa tới 1 giây sau khi trang nguồn công bố kết quả. Bản thân trang nguồn công bố chậm
+khoảng 5 giây (M.Nam, M.Trung) đến 10 giây (Siêu Tốc, M.Bắc) sau giờ mở thưởng – phần này không rút ngắn được.
 
 ## Chống gửi thiếu tin
 

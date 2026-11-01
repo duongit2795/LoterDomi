@@ -48,10 +48,53 @@ class Monitor
         }));
     }
 
-    public function poll()
+    // Game cần gọi API dồn dập: đang chờ dàn kế hoạch cập nhật, hoặc đã tới giờ mở thưởng mà chưa có kết quả
+    public function dueIds()
+    {
+        $now = Util::nowMs();
+        $ids = [];
+        foreach (self::activeGames() as $g) {
+            $s = $this->state['games'][$g['id']] ?? [];
+            if (!empty($s['pendingIssue'])
+                || (!empty($s['nextTime']) && $now >= $s['nextTime'] - 500 && $now <= $s['nextTime'] + 120000)) {
+                $ids[] = $g['id'];
+            }
+        }
+        return $ids;
+    }
+
+    // Báo cho trang xem cầu / trang thành viên biết dữ liệu vừa đổi: ghi cache/ver.json (file tĩnh, rất nhỏ)
+    private function publishVersion()
+    {
+        $sig = [];
+        foreach ($this->state['games'] as $id => $s) {
+            $sig[$id] = [$s['issue'] ?? '', $s['nextIssue'] ?? '', $s['plan'] ?? '', $s['streakLabel'] ?? ''];
+        }
+        $sig = md5(json_encode($sig));
+        if (($this->state['pubSig'] ?? '') === $sig) {
+            return;
+        }
+        $this->state['pubSig'] = $sig;
+        $dir = APP_DIR . '/cache';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        $file = "$dir/ver.json";
+        if (@file_put_contents("$file.tmp", json_encode(['v' => Util::nowMs()])) !== false && @rename("$file.tmp", $file)) {
+            Store::fixOwner($file);
+        }
+    }
+
+    // $onlyIds: chỉ gọi API các game này (chế độ gọi nhanh quanh giờ mở thưởng)
+    public function poll(?array $onlyIds = null)
     {
         $cfg = Config::get();
         $games = self::activeGames();
+        if ($onlyIds !== null) {
+            $games = array_values(array_filter($games, function ($g) use ($onlyIds) {
+                return in_array($g['id'], $onlyIds, true);
+            }));
+        }
         if (!$games) {
             return;
         }
@@ -99,6 +142,10 @@ class Monitor
                         $s['notifiedIssue'] = $s['issue'];
                         unset($s['pendingIssue'], $s['pendingSince']);
                         History::record($game, $s);
+                        // Cập nhật trang xem cầu ngay, cùng lúc với gửi Telegram (lưu state trước để trang đọc được)
+                        $this->state['games'][$id] = $s;
+                        $this->save();
+                        $this->publishVersion();
                         if ($cfg['monitor']['notifyResult']) {
                             $text = self::message('result', $game, $s);
                             if ($cfg['monitor']['combineNext']) {
@@ -116,6 +163,7 @@ class Monitor
             }
             $this->state['games'][$id] = $s;
         }
+        $this->publishVersion();
         $this->save();
     }
 

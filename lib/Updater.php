@@ -155,7 +155,7 @@ class Updater
         $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
         foreach ($it as $f) {
             $rel = str_replace('\\', '/', substr($f->getPathname(), strlen($root) + 1));
-            if (!$f->isFile() || strpos($rel, 'data/') === 0 || strpos($rel, '.git/') === 0 || $rel === '.user.ini') {
+            if (!$f->isFile() || strpos($rel, 'data/') === 0 || strpos($rel, 'cache/') === 0 || strpos($rel, '.git/') === 0 || $rel === '.user.ini') {
                 continue;
             }
             $out[] = $rel;
