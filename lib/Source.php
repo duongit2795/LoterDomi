@@ -208,6 +208,7 @@ class Source
             'hitTurn' => $hit ? (string) $hit['currentTurnSort'] : '',
             // Dữ liệu kế hoạch đã khớp với kỳ vừa mở và kỳ tiếp theo
             'planReady' => $hit !== null && $nextReady,
+            'roadRows' => $rows,
         ] + self::streak($rows, $hit);
     }
 

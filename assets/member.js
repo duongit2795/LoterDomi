@@ -22,6 +22,7 @@ document.querySelectorAll('#tabs button').forEach((b) => b.onclick = () => {
   document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('active', x === b));
   document.querySelectorAll('[data-page]').forEach((p) => p.classList.toggle('hidden', p.dataset.page !== b.dataset.tab));
   if (b.dataset.tab === 'history' && !$('h-rows').innerHTML) { loadHistory(1); loadDaily(); }
+  if (b.dataset.tab === 'road') loadRoad();
 });
 
 function countdown(ms) {
@@ -212,6 +213,84 @@ function renderDaily() {
 
 let resizeTimer;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderDaily, 150); });
+
+// ---- Bảng cầu WIN / LOST ----
+const ROAD_ROWS = 6, CELL = 30;
+let roadTimer = null;
+
+// Phân loại 1 dàn: W thắng (trúng trong winMaxTurn kỳ đầu), L thua; trúng muộn tuỳ cài đặt
+function classify(it, winMaxTurn, lateAs) {
+  const [turnNum, ws, turn] = it;
+  if (ws === 1 && turn <= winMaxTurn) return 'W';
+  if (ws === 1) return lateAs === 'lose' ? 'L' : 'M';
+  return 'L';
+}
+
+// Xếp kiểu "big road": cùng kết quả đi xuống, hết hàng hoặc vướng ô thì rẽ phải; đổi kết quả sang cột mới
+function layoutRoad(items) {
+  const used = new Set(), key = (c, r) => c + ',' + r, out = [];
+  let c = -1, r = 0, startCol = -1, prev = null;
+  for (const it of items) {
+    if (it.type !== prev) {
+      c = startCol + 1;
+      while (used.has(key(c, 0))) c++;
+      startCol = c; r = 0;
+    } else if (r + 1 < ROAD_ROWS && !used.has(key(c, r + 1))) {
+      r++;
+    } else {
+      c++;
+      while (used.has(key(c, r))) c++;
+    }
+    used.add(key(c, r));
+    out.push({ c, r, it });
+    prev = it.type;
+  }
+  return out;
+}
+
+function roadTitle(it) {
+  const [turnNum, ws, turn, range, plan, open] = it.raw;
+  const st = ws === 0 ? 'Trượt cả dàn' : `Trúng kỳ ${turn}` + (it.type === 'L' ? ' (muộn – tính là thua)' : it.type === 'M' ? ' (muộn – không tính)' : '');
+  return `Dàn ${plan} (${range})\nKết thúc kỳ ${turnNum}\nSố về: ${open || '–'}\n${st}`;
+}
+
+async function loadRoad() {
+  clearTimeout(roadTimer);
+  try {
+    const r = await api('road&limit=' + $('road-limit').value);
+    $('road-late-legend').innerHTML = r.lateAs === 'lose'
+      ? '<span class="ball l late">L</span> Trúng muộn – tính là thua'
+      : '<span class="ball" style="background:var(--muted)">M</span> Trúng muộn – không tính';
+    $('roads').innerHTML = r.games.map((g) => {
+      const items = g.road.map((raw) => ({ raw, type: classify(raw, r.winMaxTurn, r.lateAs) }));
+      const wins = items.filter((i) => i.type === 'W').length, losses = items.filter((i) => i.type === 'L').length;
+      let streak = 0;
+      for (let i = items.length - 1; i >= 0 && items[i].type === items[items.length - 1].type; i--) streak++;
+      const lastType = items.length ? items[items.length - 1].type : null;
+      const placed = layoutRoad(items);
+      const cols = Math.max(...placed.map((p) => p.c + 1), 1);
+      const cells = placed.map((p, i) => {
+        const cls = p.it.type === 'W' ? 'w' : p.it.type === 'L' ? 'l' + (p.it.raw[1] === 1 ? ' late' : '') : '';
+        const style = p.it.type === 'M' ? ' style="background:var(--muted)"' : '';
+        return `<div class="cell" style="grid-column:${p.c + 1};grid-row:${p.r + 1}"><span class="ball ${cls}${i === placed.length - 1 ? ' last' : ''}"${style} title="${esc(roadTitle(p.it))}">${p.it.type}</span></div>`;
+      }).join('');
+      const streakTxt = lastType && lastType !== 'M' ? `Đang ${lastType === 'W' ? '🔥 WIN' : '🧊 LOST'} ${streak} ván` : '';
+      return `<div class="card">
+        <div class="road-head">
+          <h2>${esc(g.name)}</h2>
+          <span class="pill w">WIN: ${wins}</span><span class="pill l">LOST: ${losses}</span>
+          <span class="muted">${streakTxt}${g.plan ? ' · Kế hoạch kỳ tiếp: <b>' + esc(g.plan) + '</b>' : ''}</span>
+        </div>
+        <div class="road-wrap"><div class="road" style="grid-template-columns:repeat(${cols}, ${CELL}px)">${cells}</div></div>
+        ${items.length ? '' : '<p class="muted">Chưa có dữ liệu – bảng sẽ có sau vài phút worker chạy.</p>'}
+      </div>`;
+    }).join('');
+    // Cuộn về cuối để thấy kết quả mới nhất
+    document.querySelectorAll('.road-wrap').forEach((w) => { w.scrollLeft = w.scrollWidth; });
+  } catch (e) { toast(e.message, true); }
+  // Tự làm mới khi đang mở tab Cầu
+  if (!document.querySelector('[data-page="road"]').classList.contains('hidden')) roadTimer = setTimeout(loadRoad, 15000);
+}
 
 // ---- Tài khoản ----
 async function changePassword(btn) {

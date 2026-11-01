@@ -84,7 +84,9 @@ Ngưỡng thắng / thua chỉnh riêng (0 = tắt). Bot đếm trên 30 dàn g�
 Trang `https://<domain>/member/` cho thành viên: đăng ký / đăng nhập, **Bảng kỳ** (kỳ vừa mở, dàn vừa đối chiếu,
 kế hoạch kỳ tiếp, đếm ngược, chuỗi thắng/thua – tự cập nhật), **Lịch sử** từng game kèm thống kê trúng kỳ 1 / trúng muộn / trượt, biểu đồ theo ngày (7/14/30 ngày: số dàn mỗi ngày
 và % trúng ngay kỳ 1, có bảng số liệu),
-và đổi mật khẩu.
+tab **Cầu** (bảng WIN/LOST kiểu big road cho từng game: cùng kết quả xếp xuống cột, đổi kết quả sang cột mới,
+kèm tổng WIN/LOST và chuỗi hiện tại – tự làm mới), và đổi mật khẩu.
+Bảng cầu không cần database: worker gộp dần các dàn đã kết thúc vào `data/road.php` (giữ 300 dàn gần nhất mỗi game).
 
 Cần MySQL/MariaDB:
 1. aaPanel → **Databases** → Add database (tên + user + mật khẩu).

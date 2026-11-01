@@ -93,6 +93,7 @@ $allowRegister = $enabled && Config::get()['members']['allowRegister'];
   <h1>🎲 LoterDomi</h1>
   <nav id="tabs">
     <button data-tab="board" class="active">Bảng kỳ</button>
+    <button data-tab="road">Cầu</button>
     <button data-tab="history">Lịch sử</button>
     <button data-tab="account">Tài khoản</button>
   </nav>
@@ -111,6 +112,23 @@ $allowRegister = $enabled && Config::get()['members']['allowRegister'];
         </table>
       </div>
     </div>
+  </section>
+
+  <section data-page="road" class="hidden">
+    <div class="card">
+      <div class="row" style="margin-top:0;justify-content:space-between">
+        <div class="legend" style="margin:0">
+          <span><span class="ball w">W</span> Thắng (trúng kỳ 1)</span>
+          <span><span class="ball l">L</span> Thua (trượt)</span>
+          <span id="road-late-legend"><span class="ball l late">L</span> Trúng muộn – tính là thua</span>
+        </div>
+        <select id="road-limit" style="width:auto" onchange="loadRoad()">
+          <option value="50">50 dàn gần nhất</option><option value="100" selected>100 dàn gần nhất</option><option value="200">200 dàn gần nhất</option>
+        </select>
+      </div>
+      <p class="muted" style="margin:8px 0 0">Mỗi ô là một dàn kế hoạch đã kết thúc. Cùng kết quả xếp xuống cùng cột, đổi kết quả thì sang cột mới. Rê chuột vào ô để xem chi tiết.</p>
+    </div>
+    <div id="roads"></div>
   </section>
 
   <section data-page="history" class="hidden">

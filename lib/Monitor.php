@@ -69,6 +69,10 @@ class Monitor
                 $this->state['games'][$id] = $s;
                 continue;
             }
+            if (isset($r['data']['roadRows'])) {
+                Road::merge($id, $r['data']['roadRows']);
+                unset($r['data']['roadRows']);
+            }
             $s = array_merge($s, $r['data'], ['lastError' => null]);
 
             // Kỳ mới có kết quả
