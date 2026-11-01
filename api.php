@@ -55,6 +55,7 @@ try {
                 'subscribers' => count($cfg['telegram']['chatIds']),
                 'games' => $games,
                 'worker' => worker_status(),
+                'outbox' => count(Outbox::items()),
                 'logs' => Logger::latest(100),
                 'serverTime' => Util::nowMs(),
             ]);

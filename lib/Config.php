@@ -47,6 +47,8 @@ class Config
                 'chatIds' => [],
                 'allowSubscribe' => true,
                 'parseMode' => 'HTML',
+                // Địa chỉ Bot API (đổi nếu dùng Bot API server riêng / máy chủ trung gian)
+                'apiBase' => 'https://api.telegram.org',
             ],
             'monitor' => [
                 'enabled' => false,
@@ -62,7 +64,8 @@ class Config
                     'loseMin' => 4,     // 0 = không báo chuỗi thua
                     'winMaxTurn' => 1,  // chỉ tính thắng khi trúng trong N kỳ đầu (1 = trúng ngay kỳ 1)
                     'lateAs' => 'lose', // dàn trúng muộn hơn winMaxTurn: 'lose' = tính là thua, 'break' = không tính, làm đứt chuỗi
-                    'targets' => [],    // vd "-1001234567890:461"; rỗng = không gửi
+                    'targets' => [],    // vd "-1001234567890:461"
+                    'alsoGameTargets' => true, // gửi thêm vào nơi nhận riêng của từng game
                 ],
                 'remindBeforeSeconds' => 30,
                 'requestTimeoutSeconds' => 15,

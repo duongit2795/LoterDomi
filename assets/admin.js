@@ -44,12 +44,13 @@ function fill() {
   $('tg-chats').value = cfg.telegram.chatIds.join('\n');
   $('tg-sub').checked = cfg.telegram.allowSubscribe;
   $('tg-parse').value = cfg.telegram.parseMode;
+  $('tg-api').value = cfg.telegram.apiBase;
   const m = cfg.monitor;
   $('m-enabled').checked = m.enabled; $('m-interval').value = m.intervalSeconds; $('m-remind').value = m.remindBeforeSeconds;
   $('m-timeout').value = m.requestTimeoutSeconds; $('m-tz').value = cfg.timezone;
   $('m-result').checked = m.notifyResult; $('m-upcoming').checked = m.notifyUpcoming; $('m-combine').checked = m.combineNext;
   const st = m.streak;
-  $('st-enabled').checked = st.enabled; $('st-win').value = st.winMin; $('st-lose').value = st.loseMin; $('st-turn').value = st.winMaxTurn; $('st-late').value = st.lateAs; $('st-targets').value = st.targets.join(', ');
+  $('st-enabled').checked = st.enabled; $('st-win').value = st.winMin; $('st-lose').value = st.loseMin; $('st-turn').value = st.winMaxTurn; $('st-late').value = st.lateAs; $('st-game').checked = st.alsoGameTargets; $('st-targets').value = st.targets.join(', ');
   $('tpl-streak').value = cfg.templates.streak;
   $('tpl-result').value = cfg.templates.result; $('tpl-upcoming').value = cfg.templates.upcoming; $('tpl-next').value = cfg.templates.next;
   $('g-headers').value = JSON.stringify(cfg.globalHeaders, null, 2);
@@ -182,6 +183,7 @@ async function saveTele() {
       chatIds: $('tg-chats').value.split(/[\s,]+/).filter(Boolean),
       allowSubscribe: $('tg-sub').checked,
       parseMode: $('tg-parse').value,
+      apiBase: $('tg-api').value.trim() || 'https://api.telegram.org',
     } });
     toast('Đã lưu');
   });
@@ -207,7 +209,7 @@ async function saveSettings(silent) {
         remindBeforeSeconds: +$('m-remind').value || 0, requestTimeoutSeconds: +$('m-timeout').value || 15,
         notifyResult: $('m-result').checked, notifyUpcoming: $('m-upcoming').checked, combineNext: $('m-combine').checked,
         streak: {
-          enabled: $('st-enabled').checked, winMin: +$('st-win').value || 0, loseMin: +$('st-lose').value || 0, winMaxTurn: +$('st-turn').value || 1, lateAs: $('st-late').value,
+          enabled: $('st-enabled').checked, winMin: +$('st-win').value || 0, loseMin: +$('st-lose').value || 0, winMaxTurn: +$('st-turn').value || 1, lateAs: $('st-late').value, alsoGameTargets: $('st-game').checked,
           targets: $('st-targets').value.split(/[\s,]+/).filter(Boolean),
         },
       },
@@ -390,6 +392,7 @@ async function refresh() {
   try { status = await api('status'); skew = status.serverTime - Date.now(); } catch { return; }
   const w = status.worker;
   $('s-worker').innerHTML = w.alive ? '<span class="badge b-ok">Đang chạy</span>' : '<span class="badge b-err">Không chạy</span>';
+  if (status.outbox) $('s-worker').innerHTML += ` <span class="badge b-warn" title="Tin gửi lỗi tạm thời, sẽ tự gửi lại">${status.outbox} tin chờ gửi lại</span>`;
   $('cron-help').classList.toggle('hidden', w.alive);
   $('s-monitor').innerHTML = status.monitorEnabled ? '<span class="badge b-ok">Bật</span>' : '<span class="badge b-off">Tắt</span>';
   $('s-subs').textContent = status.subscribers;

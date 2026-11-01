@@ -75,6 +75,7 @@ Kỳ 31/10/2026-0479: 0,5,8,0,1,1 → dàn 1 3 7 8 9 (0478-0480) về 1 ✅ Trú
 📋 Kế hoạch tiếp Đuôi 0480-0482: 3 4 5 6 9
 ```
 
+Tin báo chuỗi gửi vào nơi nhận báo chuỗi **và** cả chủ đề/chat của chính game đó (tắt được trong admin).
 Gán nơi nhận: vào chủ đề (vd chủ đề 461) gõ `/bind chuỗi`, hoặc nhập `chat_id:461` trong admin → Cài đặt → Báo chuỗi.
 Ngưỡng thắng / thua chỉnh riêng (0 = tắt). Bot đếm trên 30 dàn gần nhất; nếu cả 30 cùng một chuỗi sẽ hiện dạng `29+`.
 
@@ -95,6 +96,14 @@ Mật khẩu database chỉ lưu trong `data/config.php` trên server (không đ
 
 Tab **Thành viên** trong admin: bật/tắt tự đăng ký, bắt buộc duyệt tài khoản mới, tìm kiếm, duyệt / khoá / mở khoá,
 đặt lại mật khẩu, xoá, thêm thành viên thủ công. Lịch sử kỳ được lưu vào bảng `draws` từ lúc bật database.
+
+## Chống gửi thiếu tin
+
+- Telegram giới hạn ~20 tin/phút mỗi nhóm. Khi bị giới hạn (lỗi 429), bot chờ đúng số giây Telegram yêu cầu rồi gửi lại.
+- Lỗi tạm thời (mạng, Telegram lỗi 5xx): tin vào **hàng chờ** và được gửi lại theo đúng thứ tự từng nơi nhận
+  (tối đa 15 phút). Số tin đang chờ hiện ở thẻ Worker trên trang Tổng quan.
+- Lỗi cố định (sai chat id, bot bị kick – lỗi 400/403) thì bỏ tin và ghi Nhật ký.
+- Máy chủ không truy cập được Telegram trực tiếp: đổi **Địa chỉ Bot API** ở tab Telegram sang Bot API server riêng / máy chủ trung gian.
 
 ## Mẫu tin nhắn
 

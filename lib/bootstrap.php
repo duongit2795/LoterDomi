@@ -16,6 +16,7 @@ require __DIR__ . '/Store.php';
 require __DIR__ . '/Config.php';
 require __DIR__ . '/Logger.php';
 require __DIR__ . '/Telegram.php';
+require __DIR__ . '/Outbox.php';
 require __DIR__ . '/Source.php';
 require __DIR__ . '/Monitor.php';
 require __DIR__ . '/Bot.php';

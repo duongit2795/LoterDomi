@@ -111,7 +111,7 @@ class Monitor
     private function streakAlert(array $game, array $s)
     {
         $cfg = Config::get()['monitor']['streak'];
-        if (!$cfg['enabled'] || !$cfg['targets'] || empty($s['streakNew']) || empty($s['streakType'])) {
+        if (!$cfg['enabled'] || (!$cfg['targets'] && !$cfg['alsoGameTargets']) || empty($s['streakNew']) || empty($s['streakType'])) {
             return;
         }
         $min = (int) ($s['streakType'] === 'win' ? $cfg['winMin'] : $cfg['loseMin']);
@@ -122,7 +122,12 @@ class Monitor
         if ($s['streakType'] === 'lose' && ($s['hitStatus'] ?? '') === '1') {
             $s['planStatus'] = "⚠️ Trúng muộn kỳ {$s['hitTurn']} (tính là thua)";
         }
-        $n = Telegram::broadcast(self::message('streak', $game, $s), $cfg['targets']);
+        // Gửi vào nơi nhận báo chuỗi và cả nơi nhận của game đó (không trùng lặp)
+        $targets = $cfg['targets'];
+        if ($cfg['alsoGameTargets']) {
+            $targets = array_values(array_unique(array_merge($targets, self::targets($game))));
+        }
+        $n = Telegram::broadcast(self::message('streak', $game, $s), $targets);
         Logger::info("[{$game['name']}] chuỗi {$s['streakType']} {$s['streakCount']} ván → $n chat");
     }
 

@@ -65,6 +65,8 @@ do {
     $cfg = Config::get(true);
     $monitor->heartbeat($mode);
     try {
+        // Gửi lại tin bị lỗi tạm thời trước, để giữ đúng thứ tự
+        Outbox::flush();
         if ($cfg['monitor']['enabled']) {
             // Mốc thời gian lưu trong state để các lần tick nối tiếp nhau đều đặn
             $interval = max(2, (int) $cfg['monitor']['intervalSeconds']) * 1000;

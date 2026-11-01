@@ -1,24 +1,40 @@
 <?php
 class Telegram
 {
+    // Lỗi tạm thời (mạng, 429, 5xx) thì nên gửi lại; lỗi 400/403 (sai chat, bot bị kick) thì không
+    public static function isTransient(Exception $e)
+    {
+        return !($e instanceof TelegramException) || $e->retryable;
+    }
+
     public static function call($method, array $params = [], $token = null)
     {
         $token = $token ?: Config::get()['telegram']['token'];
         if (!$token) {
-            throw new RuntimeException('Chưa cấu hình Telegram bot token');
+            throw new TelegramException('Chưa cấu hình Telegram bot token', 0, false);
         }
-        list($status, $body) = Util::http("https://api.telegram.org/bot$token/$method", [
-            'method' => 'POST',
-            'headers' => ['Content-Type' => 'application/json'],
-            'body' => json_encode($params, JSON_UNESCAPED_UNICODE),
-            'timeout' => 20,
-        ]);
-        $data = json_decode($body, true);
-        if (!is_array($data) || empty($data['ok'])) {
+        for ($attempt = 1; ; $attempt++) {
+            $base = rtrim(Config::get()['telegram']['apiBase'] ?: 'https://api.telegram.org', '/');
+            list($status, $body) = Util::http("$base/bot$token/$method", [
+                'method' => 'POST',
+                'headers' => ['Content-Type' => 'application/json'],
+                'body' => json_encode($params, JSON_UNESCAPED_UNICODE),
+                'timeout' => 20,
+            ]);
+            $data = json_decode($body, true);
+            if (is_array($data) && !empty($data['ok'])) {
+                return $data['result'];
+            }
             $desc = is_array($data) && isset($data['description']) ? $data['description'] : "HTTP $status";
-            throw new RuntimeException("Telegram $method: $desc");
+            $retryAfter = (int) ($data['parameters']['retry_after'] ?? 0);
+            // Bị giới hạn tốc độ: chờ đúng thời gian Telegram yêu cầu rồi gửi lại (tối đa 3 lần, mỗi lần ≤ 15 giây)
+            if ($status === 429 && $attempt < 3 && $retryAfter > 0 && $retryAfter <= 15) {
+                Logger::warn("Telegram giới hạn tốc độ, chờ {$retryAfter}s rồi gửi lại");
+                sleep($retryAfter);
+                continue;
+            }
+            throw new TelegramException("Telegram $method: $desc", $status, $status === 429 || $status >= 500 || $status === 0, $retryAfter);
         }
-        return $data['result'];
     }
 
     // Nơi nhận dạng "chat_id" hoặc "chat_id:topic_id" (chủ đề trong nhóm diễn đàn)
@@ -41,18 +57,42 @@ class Telegram
         return self::call('sendMessage', $params);
     }
 
-    // Gửi tới danh sách nơi nhận (mặc định: các chat chung), trả về số nơi gửi thành công
+    // Gửi tới danh sách nơi nhận (mặc định: các chat chung), trả về số nơi gửi thành công.
+    // Lỗi tạm thời: tin được đưa vào hàng chờ (Outbox) để gửi lại, không bị mất.
     public static function broadcast($text, ?array $targets = null)
     {
         $sent = 0;
         foreach ($targets === null ? Config::get()['telegram']['chatIds'] : $targets as $id) {
+            // Nơi này còn tin chờ gửi lại thì xếp sau để giữ đúng thứ tự
+            if (Outbox::has($id)) {
+                Outbox::add($id, $text);
+                continue;
+            }
             try {
                 self::sendMessage($id, $text);
                 $sent++;
             } catch (Exception $e) {
-                Logger::error("Gửi tới $id lỗi: " . $e->getMessage());
+                if (self::isTransient($e)) {
+                    Outbox::add($id, $text);
+                    Logger::warn("Gửi tới $id lỗi tạm thời, đã đưa vào hàng chờ: " . $e->getMessage());
+                } else {
+                    Logger::error("Gửi tới $id lỗi: " . $e->getMessage());
+                }
             }
         }
         return $sent;
+    }
+}
+
+class TelegramException extends RuntimeException
+{
+    public $retryable;
+    public $retryAfter;
+
+    public function __construct($message, $status, $retryable, $retryAfter = 0)
+    {
+        parent::__construct($message, (int) $status);
+        $this->retryable = $retryable;
+        $this->retryAfter = $retryAfter;
     }
 }

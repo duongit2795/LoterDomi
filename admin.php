@@ -107,6 +107,8 @@ $logged = Auth::check();
       <label>Chat ID nhận thông báo (mỗi dòng 1 id; nhóm/kênh thường bắt đầu bằng -100)</label>
       <textarea id="tg-chats"></textarea>
       <label class="check"><input type="checkbox" id="tg-sub"> Cho phép người dùng tự đăng ký bằng /subscribe</label>
+      <label>Địa chỉ Bot API (nâng cao – để mặc định nếu không dùng máy chủ trung gian)</label>
+      <input id="tg-api" placeholder="https://api.telegram.org">
       <label>Parse mode</label>
       <select id="tg-parse"><option value="HTML">HTML</option><option value="">Văn bản thường</option></select>
       <div class="row">
@@ -151,6 +153,7 @@ $logged = Auth::check();
       </div>
       <label>Gửi tới (chat_id:chủ_đề_id, cách nhau bởi dấu phẩy)</label>
       <input id="st-targets" placeholder="vd: -1001234567890:461">
+      <label class="check"><input type="checkbox" id="st-game"> Gửi thêm vào chủ đề/chat của từng game</label>
     </div>
     <div class="card">
       <h2>Mẫu tin nhắn</h2>
