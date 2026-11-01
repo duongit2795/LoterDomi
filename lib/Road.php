@@ -94,6 +94,22 @@ class Road
         ];
     }
 
+    // Dữ liệu cho bảng cầu của các game đang bật
+    public static function payload($limit, $onlyGameId = '')
+    {
+        $limit = min(self::KEEP, max(20, (int) $limit));
+        $states = Monitor::snapshot()['games'] ?? [];
+        $games = [];
+        foreach (Monitor::activeGames() as $g) {
+            if ($onlyGameId !== '' && $g['id'] !== $onlyGameId) {
+                continue;
+            }
+            $games[] = ['id' => $g['id'], 'name' => $g['name'], 'road' => self::get($g['id'], $limit),
+                'nextIssue' => $states[$g['id']]['nextIssue'] ?? '', 'plan' => $states[$g['id']]['plan'] ?? ''];
+        }
+        return ['games' => $games];
+    }
+
     public static function get($gameId, $limit)
     {
         $list = Store::read(self::STORE, [])[$gameId] ?? [];

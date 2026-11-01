@@ -52,6 +52,7 @@ function fill() {
   const st = m.streak;
   $('st-enabled').checked = st.enabled; $('st-win').value = st.winMin; $('st-lose').value = st.loseMin; $('st-game').checked = st.alsoGameTargets; $('st-targets').value = st.targets.join(', ');
   $('tpl-streak').value = cfg.templates.streak;
+  $('pr-enabled').checked = cfg.publicRoad.enabled; $('pr-key').value = cfg.publicRoad.key; updatePublicLink();
   $('tpl-result').value = cfg.templates.result; $('tpl-upcoming').value = cfg.templates.upcoming; $('tpl-next').value = cfg.templates.next;
   $('g-headers').value = JSON.stringify(cfg.globalHeaders, null, 2);
   $('u-repo').value = cfg.update.repo; $('u-branch').value = cfg.update.branch; $('u-token').value = cfg.update.token;
@@ -213,6 +214,7 @@ async function saveSettings(silent) {
           targets: $('st-targets').value.split(/[\s,]+/).filter(Boolean),
         },
       },
+      publicRoad: { enabled: $('pr-enabled').checked, key: $('pr-key').value.trim() },
       timezone: $('m-tz').value.trim() || 'Asia/Ho_Chi_Minh',
       templates: { result: $('tpl-result').value, upcoming: $('tpl-upcoming').value, next: $('tpl-next').value, streak: $('tpl-streak').value },
       globalHeaders: headers,
@@ -241,6 +243,13 @@ async function changePassword() {
     toast('Đã đổi mật khẩu');
   });
 }
+
+function updatePublicLink() {
+  const k = $('pr-key').value.trim();
+  const url = new URL('xemcau.php' + (k ? '?k=' + encodeURIComponent(k) : ''), location.href).href;
+  $('pr-link').textContent = url; $('pr-open').href = url;
+}
+document.addEventListener('input', (e) => { if (e.target.id === 'pr-key') updatePublicLink(); });
 
 // ---- Thành viên ----
 const MB_STATUS = { active: ['Hoạt động', 'b-ok'], pending: ['Chờ duyệt', 'b-warn'], locked: ['Bị khoá', 'b-err'] };

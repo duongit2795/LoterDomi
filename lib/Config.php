@@ -92,6 +92,11 @@ class Config
                 'user' => '',
                 'pass' => '',
             ],
+            // Trang xem cầu công khai /xemcau.php (key rỗng = ai có link đều xem được)
+            'publicRoad' => [
+                'enabled' => true,
+                'key' => '',
+            ],
             'members' => [
                 'allowRegister' => true,
                 'requireApproval' => false,

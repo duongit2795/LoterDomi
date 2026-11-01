@@ -153,6 +153,21 @@ $logged = Auth::check();
       <label class="check"><input type="checkbox" id="st-game"> Gửi thêm vào chủ đề/chat của từng game</label>
     </div>
     <div class="card">
+      <h2>Trang xem cầu công khai</h2>
+      <p class="muted">Ai có link là xem được bảng cầu W/L của các game, không cần đăng nhập.</p>
+      <label class="check"><input type="checkbox" id="pr-enabled"> Bật trang xem cầu</label>
+      <label>Mã truy cập (tuỳ chọn – nếu đặt, link phải có <code>?k=mã</code>; để trống = chỉ cần link)</label>
+      <div class="row" style="margin-top:0">
+        <input id="pr-key" style="max-width:320px" placeholder="để trống">
+        <button class="btn sec" type="button" onclick="$('pr-key').value = Math.random().toString(36).slice(2, 12); updatePublicLink()">Tạo mã ngẫu nhiên</button>
+      </div>
+      <label>Link chia sẻ (lưu cài đặt rồi mới dùng)</label>
+      <div class="row" style="margin-top:0">
+        <code class="block" id="pr-link" style="flex:1;margin:0"></code>
+        <a class="btn sec" id="pr-open" target="_blank">Mở</a>
+      </div>
+    </div>
+    <div class="card">
       <h2>Mẫu tin nhắn</h2>
       <p class="muted">Biến: {game} {issue} {result} {nextIssue} {nextTime} {countdown} {now}<br>
         Riêng vnlotteryplan: {play} kiểu chơi, {plan} dàn kế hoạch kỳ tiếp, {planRange} khoảng kỳ, {planTurn} đang nuôi kỳ thứ mấy, {planCheck} dàn vừa đối chiếu, {playResult} số về, {planStatus} trúng/trượt/đang nuôi, {streakIcon} {streakText} {streakLabel} chuỗi thắng/thua.<br>

@@ -186,6 +186,7 @@ $allowRegister = $enabled && Config::get()['members']['allowRegister'];
 </main>
 <div id="toast"></div>
 <script>window.CSRF = <?= json_encode(Auth::csrf()) ?>;</script>
+<script src="../assets/road.js?v=<?= $h(APP_VERSION) ?>"></script>
 <script src="../assets/member.js?v=<?= $h(APP_VERSION) ?>"></script>
 <?php endif; ?>
 </body>

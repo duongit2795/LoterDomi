@@ -89,6 +89,12 @@ Dữ liệu cầu không cần database: worker lưu từng kỳ vào `data/road
 mỗi dàn 1 dòng nên bot tách ngược ra từng kỳ (trúng kỳ 3 → L L W, trượt cả dàn → L L L).
 Tab Lịch sử (cần database) cũng thống kê và vẽ biểu đồ theo W/L từng kỳ.
 
+## Trang xem cầu công khai (/xemcau.php)
+
+`https://<domain>/xemcau.php` – ai có link là xem được bảng cầu W/L của tất cả game, không cần đăng nhập, tự cập nhật
+15 giây. Lọc 1 game: thêm `?game=<id>` (chọn trong ô trên trang). Admin → Cài đặt → **Trang xem cầu công khai**:
+bật/tắt và đặt **mã truy cập** (tuỳ chọn) – khi có mã, link phải dạng `xemcau.php?k=<mã>`; đổi mã là link cũ hết hiệu lực.
+
 Cần MySQL/MariaDB:
 1. aaPanel → **Databases** → Add database (tên + user + mật khẩu).
 2. Admin → tab **Thành viên** → mục Database: nhập host `127.0.0.1`, tên DB, user, mật khẩu → **Kết nối & lưu**
