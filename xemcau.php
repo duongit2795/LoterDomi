@@ -47,28 +47,25 @@ $qs = function (array $extra) use ($key, $gameId) {
 <header>
   <h1>🎲 Cầu W / L</h1>
   <span style="flex:1"></span>
-  <span class="muted" id="updated"></span>
+  <span class="muted" id="updated" style="font-size:12px"></span>
 </header>
 <main>
-  <div class="card">
-    <div class="row" style="margin-top:0;justify-content:space-between">
+  <div class="card" style="padding:12px">
+    <nav class="chips">
+      <a class="chip <?= $gameId === '' ? 'on' : '' ?>" href="<?= $h($qs(['game' => ''])) ?>">Tất cả</a>
+      <?php foreach ($games as $g): ?>
+        <a class="chip <?= $g['id'] === $gameId ? 'on' : '' ?>" href="<?= $h($qs(['game' => $g['id']])) ?>"><?= $h($g['name']) ?></a>
+      <?php endforeach; ?>
+    </nav>
+    <div class="row" style="justify-content:space-between;margin-top:10px">
       <div class="legend" style="margin:0">
-        <span><span class="ball w">W</span> Kỳ dàn trúng</span>
-        <span><span class="ball l">L</span> Kỳ dàn không trúng</span>
+        <span><span class="ball w">W</span> Dàn trúng</span>
+        <span><span class="ball l">L</span> Không trúng</span>
       </div>
-      <div class="row" style="margin:0">
-        <select id="game" style="width:auto" onchange="location.href=this.value">
-          <option value="<?= $h($qs(['game' => ''])) ?>">Tất cả game</option>
-          <?php foreach ($games as $g): ?>
-            <option value="<?= $h($qs(['game' => $g['id']])) ?>" <?= $g['id'] === $gameId ? 'selected' : '' ?>><?= $h($g['name']) ?></option>
-          <?php endforeach; ?>
-        </select>
-        <select id="limit" style="width:auto" onchange="load()">
-          <option value="100">100 kỳ</option><option value="200" selected>200 kỳ</option><option value="500">500 kỳ</option><option value="1000">1000 kỳ</option>
-        </select>
-      </div>
+      <select id="limit" style="width:auto;padding:6px 8px" onchange="load()">
+        <option value="100">100 kỳ</option><option value="200" selected>200 kỳ</option><option value="500">500 kỳ</option><option value="1000">1000 kỳ</option>
+      </select>
     </div>
-    <p class="muted" style="margin:8px 0 0">Mỗi ô là một kỳ: W nếu dàn kế hoạch đang nuôi trúng ở kỳ đó, L nếu không trúng. Cùng kết quả xếp xuống cùng cột, đổi kết quả thì sang cột mới. Tự cập nhật ngay khi có kỳ mới.</p>
   </div>
   <div id="roads"></div>
 </main>
@@ -81,7 +78,7 @@ async function load() {
   try {
     const r = await fetch('xemcau.php?' + params).then((x) => x.json());
     if (r.error) throw new Error(r.error);
-    RoadView.render(document.getElementById('roads'), r.games);
+    RoadView.render(document.getElementById('roads'), r.games, r.serverTime);
     document.getElementById('updated').textContent = 'Cập nhật ' + new Date().toLocaleTimeString('vi-VN');
   } catch (e) {
     document.getElementById('updated').textContent = 'Lỗi tải dữ liệu: ' + e.message;

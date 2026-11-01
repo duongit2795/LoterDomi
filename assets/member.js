@@ -218,7 +218,7 @@ window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer
 async function loadRoad() {
   try {
     const r = await api('road&limit=' + $('road-limit').value);
-    RoadView.render($('roads'), r.games);
+    RoadView.render($('roads'), r.games, r.serverTime);
   } catch (e) { toast(e.message, true); }
 }
 // Có kỳ mới là tải lại ngay khi đang mở tab Cầu

@@ -105,9 +105,10 @@ class Road
                 continue;
             }
             $games[] = ['id' => $g['id'], 'name' => $g['name'], 'road' => self::get($g['id'], $limit),
-                'nextIssue' => $states[$g['id']]['nextIssue'] ?? '', 'plan' => $states[$g['id']]['plan'] ?? ''];
+                'nextIssue' => $states[$g['id']]['nextIssue'] ?? '', 'nextTime' => $states[$g['id']]['nextTime'] ?? null,
+                'plan' => $states[$g['id']]['plan'] ?? ''];
         }
-        return ['games' => $games];
+        return ['games' => $games, 'serverTime' => Util::nowMs()];
     }
 
     public static function get($gameId, $limit)
