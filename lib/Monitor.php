@@ -70,8 +70,16 @@ class Monitor
                 continue;
             }
             if (isset($r['data']['roadRows'])) {
-                Road::merge($id, $r['data']['roadRows']);
+                // Chuỗi W/L theo từng kỳ (cùng dữ liệu với bảng Cầu)
+                $st = Road::streak(Road::merge($id, $r['data']['roadRows']));
                 unset($r['data']['roadRows']);
+                $r['data'] += [
+                    'streakType' => $st['type'],
+                    'streakCount' => $st['count'],
+                    'streakLabel' => $st['label'],
+                    // Kỳ vừa mở đã có trong dữ liệu từng kỳ thì chuỗi vừa được cập nhật
+                    'streakNew' => $st['lastIssue'] !== '' && $st['lastIssue'] === $r['data']['issue'],
+                ];
             }
             $s = array_merge($s, $r['data'], ['lastError' => null]);
 
@@ -111,7 +119,7 @@ class Monitor
         $this->save();
     }
 
-    // Báo khi chuỗi thắng/thua liên tiếp đạt ngưỡng (từ ván thứ N trở đi, mỗi ván báo 1 lần)
+    // Báo khi chuỗi W/L liên tiếp (theo từng kỳ) đạt ngưỡng; từ kỳ thứ N trở đi mỗi kỳ báo 1 lần
     private function streakAlert(array $game, array $s)
     {
         $cfg = Config::get()['monitor']['streak'];
@@ -122,17 +130,13 @@ class Monitor
         if ($min <= 0 || $s['streakCount'] < $min) {
             return;
         }
-        // Dàn trúng muộn được tính là thua: ghi rõ để tin không bị mâu thuẫn
-        if ($s['streakType'] === 'lose' && ($s['hitStatus'] ?? '') === '1') {
-            $s['planStatus'] = "⚠️ Trúng muộn kỳ {$s['hitTurn']} (tính là thua)";
-        }
         // Gửi vào nơi nhận báo chuỗi và cả nơi nhận của game đó (không trùng lặp)
         $targets = $cfg['targets'];
         if ($cfg['alsoGameTargets']) {
             $targets = array_values(array_unique(array_merge($targets, self::targets($game))));
         }
         $n = Telegram::broadcast(self::message('streak', $game, $s), $targets);
-        Logger::info("[{$game['name']}] chuỗi {$s['streakType']} {$s['streakCount']} ván → $n chat");
+        Logger::info("[{$game['name']}] chuỗi {$s['streakType']} {$s['streakCount']} kỳ → $n chat");
     }
 
     public function remind()

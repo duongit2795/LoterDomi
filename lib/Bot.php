@@ -155,7 +155,7 @@ class Bot
             case '/topics':
                 $st = $cfg['monitor']['streak'];
                 return $reply("📌 <b>Nơi gửi của từng game</b>\n" . (self::gameList($cfg['games']) ?: 'Chưa có game.')
-                    . "\n\n🔥 <b>Báo chuỗi</b> (thắng ≥ {$st['winMin']}, thua ≥ {$st['loseMin']}) → <code>" . Util::h($st['targets'] ? implode(', ', $st['targets']) : 'chưa gán') . '</code>');
+                    . "\n\n🔥 <b>Báo chuỗi</b> (W ≥ {$st['winMin']} kỳ, L ≥ {$st['loseMin']} kỳ) → <code>" . Util::h($st['targets'] ? implode(', ', $st['targets']) : 'chưa gán') . '</code>');
             case '/bind':
             case '/unbind':
                 if (!self::isGroupAdmin($msg)) {
@@ -187,7 +187,7 @@ class Bot
                     Config::update(['monitor' => ['streak' => ['targets' => $targets, 'enabled' => true]]]);
                     Logger::info("Gán báo chuỗi thắng/thua → $here");
                     $st = $cfg['monitor']['streak'];
-                    return $reply('✅ Báo chuỗi thắng/thua sẽ gửi vào ' . ($thread ? 'chủ đề này' : 'chat này') . " (<code>$here</code>).\nNgưỡng: thắng từ {$st['winMin']} ván, thua từ {$st['loseMin']} ván (0 = tắt) – chỉnh trong admin → Cài đặt.");
+                    return $reply('✅ Báo chuỗi thắng/thua sẽ gửi vào ' . ($thread ? 'chủ đề này' : 'chat này') . " (<code>$here</code>).\nNgưỡng: W liên tiếp từ {$st['winMin']} kỳ, L liên tiếp từ {$st['loseMin']} kỳ (0 = tắt) – chỉnh trong admin → Cài đặt.");
                 }
                 if ($arg === '') {
                     return $reply("Gõ <code>/bind tên game</code> hoặc <code>/bind số</code> ngay trong chủ đề muốn nhận tin (<code>/bind chuỗi</code> để nhận báo chuỗi thắng/thua):\n" . self::gameList($games));

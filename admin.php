@@ -142,14 +142,11 @@ $logged = Auth::check();
     </div>
     <div class="card">
       <h2>Báo chuỗi thắng/thua liên tiếp</h2>
-      <p class="muted">Mỗi "ván" là một dàn kế hoạch đã kết thúc. Thắng = trúng trong số kỳ đầu đã đặt (mặc định chỉ kỳ 1). Thua = trượt cả dàn, và mặc định cả dàn trúng muộn hơn (chỉnh ở ô bên dưới). Khi chuỗi đạt ngưỡng, mỗi ván tiếp theo đều báo (vd ngưỡng 4: báo ở ván 4, 5, 6…).
-        Gán nhanh: vào chủ đề muốn nhận, gõ <code>/bind chuỗi</code>.</p>
+      <p class="muted">Đếm theo <b>từng kỳ</b>, cùng dữ liệu với tab Cầu của trang thành viên: W = dàn đang nuôi trúng ở kỳ đó, L = không trúng. Khi chuỗi đạt ngưỡng, mỗi kỳ tiếp theo của chuỗi đều báo (vd ngưỡng 4: báo ở kỳ 4, 5, 6…). Gán nhanh: vào chủ đề muốn nhận, gõ <code>/bind chuỗi</code>.</p>
       <label class="check"><input type="checkbox" id="st-enabled"> Bật báo chuỗi</label>
       <div class="grid">
-        <div><label>Thắng liên tiếp từ (ván) – 0 = tắt</label><input id="st-win" type="number" min="0"></div>
-        <div><label>Thua liên tiếp từ (ván) – 0 = tắt</label><input id="st-lose" type="number" min="0"></div>
-        <div><label>Tính là thắng khi trúng trong … kỳ đầu (1 = chỉ trúng ngay kỳ 1)</label><input id="st-turn" type="number" min="1" max="5"></div>
-        <div><label>Dàn trúng muộn hơn thì tính là</label><select id="st-late"><option value="lose">Thua (nối chuỗi thua)</option><option value="break">Không tính (làm đứt chuỗi)</option></select></div>
+        <div><label>W liên tiếp từ (kỳ) – 0 = tắt</label><input id="st-win" type="number" min="0"></div>
+        <div><label>L liên tiếp từ (kỳ) – 0 = tắt</label><input id="st-lose" type="number" min="0"></div>
       </div>
       <label>Gửi tới (chat_id:chủ_đề_id, cách nhau bởi dấu phẩy)</label>
       <input id="st-targets" placeholder="vd: -1001234567890:461">

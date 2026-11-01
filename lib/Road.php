@@ -62,7 +62,7 @@ class Road
             }
         }
         if (!$fresh) {
-            return;
+            return $list;
         }
         $list = array_merge($list, $fresh);
         usort($list, function ($a, $b) {
@@ -70,6 +70,28 @@ class Road
         });
         $all[$gameId] = array_slice($list, -self::KEEP);
         Store::write(self::STORE, $all);
+        return $all[$gameId];
+    }
+
+    // Chuỗi W/L liên tiếp tính từ kỳ mới nhất
+    public static function streak(array $list)
+    {
+        $n = count($list);
+        if (!$n) {
+            return ['type' => '', 'count' => 0, 'label' => '0', 'lastIssue' => ''];
+        }
+        $type = $list[$n - 1][1];
+        $count = 0;
+        for ($i = $n - 1; $i >= 0 && $list[$i][1] === $type; $i--) {
+            $count++;
+        }
+        return [
+            'type' => $type === 'W' ? 'win' : 'lose',
+            'count' => $count,
+            // Cả lịch sử đã lưu đều cùng một chuỗi: thực tế có thể dài hơn
+            'label' => $count === $n ? "$count+" : (string) $count,
+            'lastIssue' => $list[$n - 1][0],
+        ];
     }
 
     public static function get($gameId, $limit)

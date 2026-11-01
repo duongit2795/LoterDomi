@@ -60,10 +60,8 @@ class Config
                 // Báo chuỗi thắng/thua liên tiếp (vnlotteryplan) vào nơi nhận riêng
                 'streak' => [
                     'enabled' => true,
-                    'winMin' => 4,      // 0 = không báo chuỗi thắng
-                    'loseMin' => 4,     // 0 = không báo chuỗi thua
-                    'winMaxTurn' => 1,  // chỉ tính thắng khi trúng trong N kỳ đầu (1 = trúng ngay kỳ 1)
-                    'lateAs' => 'lose', // dàn trúng muộn hơn winMaxTurn: 'lose' = tính là thua, 'break' = không tính, làm đứt chuỗi
+                    'winMin' => 4,      // số kỳ W liên tiếp để báo; 0 = không báo
+                    'loseMin' => 4,     // số kỳ L liên tiếp để báo; 0 = không báo
                     'targets' => [],    // vd "-1001234567890:461"
                     'alsoGameTargets' => true, // gửi thêm vào nơi nhận riêng của từng game
                 ],
@@ -76,7 +74,7 @@ class Config
             ],
             'templates' => [
                 'result' => "🎯 <b>{game}</b> – Kỳ <code>{issue}</code>\nKết quả: <b>{result}</b>\n📋 Dàn {planCheck}: về <b>{playResult}</b> → {planStatus}",
-                'streak' => "{streakIcon} <b>{game}</b> đang <b>{streakText} {streakLabel} ván</b> liên tiếp\nKỳ <code>{issue}</code>: {result} → dàn {planCheck} về <b>{playResult}</b> {planStatus}\n📋 Kế hoạch tiếp {play} {planRange}: <b>{plan}</b>",
+                'streak' => "{streakIcon} <b>{game}</b> đang <b>{streakText} {streakLabel} kỳ</b> liên tiếp\nKỳ <code>{issue}</code>: {result} → dàn {planCheck} về <b>{playResult}</b> {planStatus}\n📋 Kế hoạch tiếp {play} {planRange}: <b>{plan}</b>",
                 'next' => "⏭ Kỳ tiếp <code>{nextIssue}</code> – {nextTime}\n📋 Kế hoạch {play} {planRange} (nuôi kỳ {planTurn}): <b>{plan}</b>",
                 'upcoming' => "⏰ <b>{game}</b>\nKỳ sắp mở: <code>{nextIssue}</code> – {nextTime} (còn {countdown})\n📋 Kế hoạch {play} {planRange} (nuôi kỳ {planTurn}): <b>{plan}</b>",
             ],
@@ -128,10 +126,20 @@ class Config
         }, $list), 'strlen')));
     }
 
+    // Mẫu tin mặc định của bản cũ (chưa bị sửa) thì tự đổi sang mẫu mới
+    const OLD_TEMPLATES = [
+        'streak' => ["{streakIcon} <b>{game}</b> đang <b>{streakText} {streakLabel} ván</b> liên tiếp\nKỳ <code>{issue}</code>: {result} → dàn {planCheck} về <b>{playResult}</b> {planStatus}\n📋 Kế hoạch tiếp {play} {planRange}: <b>{plan}</b>"],
+    ];
+
     public static function get($fresh = false)
     {
         if ($fresh || self::$cache === null) {
             $cfg = Util::merge(self::defaults(), Store::read('config', []));
+            foreach (self::OLD_TEMPLATES as $k => $olds) {
+                if (in_array($cfg['templates'][$k], $olds, true)) {
+                    $cfg['templates'][$k] = self::defaults()['templates'][$k];
+                }
+            }
             $cfg['games'] = array_map([self::class, 'normalizeGame'], $cfg['games'] ?: []);
             self::$cache = $cfg;
         }

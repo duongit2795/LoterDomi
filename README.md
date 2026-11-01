@@ -62,22 +62,21 @@ Admin → tab **Cập nhật** → **Kiểm tra cập nhật** → **Cập nhậ
   Game chưa gán sẽ gửi tới các chat chung ở tab Telegram.
 - Bot nhận lệnh bằng `getUpdates` nên không cần webhook hay SSL.
 
-## Báo chuỗi thắng/thua liên tiếp
+## Báo chuỗi W / L liên tiếp
 
-Mỗi "ván" là một dàn kế hoạch đã kết thúc. **Thắng** = trúng ngay kỳ 1 (chỉnh được: trúng trong N kỳ đầu);
-**Thua** = trượt cả dàn, và mặc định cả dàn trúng muộn (kỳ 2, kỳ 3). Có thể đổi để dàn trúng muộn
-không tính (làm đứt chuỗi) – khi đó chuỗi thua rất hiếm vì chỉ còn dàn trượt cả 3 kỳ. Khi một game thắng hoặc thua liên tiếp đạt ngưỡng
-(mặc định **từ ván 4**), bot báo vào nơi nhận riêng, mỗi ván tiếp theo của chuỗi đều báo:
+Đếm theo **từng kỳ**, cùng dữ liệu với tab Cầu: W = dàn đang nuôi trúng ở kỳ đó, L = không trúng
+(trúng kỳ 3 → L L W). Khi một game có chuỗi W hoặc L liên tiếp đạt ngưỡng (mặc định **từ kỳ 4**), bot báo vào nơi
+nhận riêng, mỗi kỳ tiếp theo của chuỗi đều báo:
 
 ```
-🔥 M.Nam Siêu Tốc 45s đang THẮNG 9 ván liên tiếp
-Kỳ 31/10/2026-0479: 0,5,8,0,1,1 → dàn 1 3 7 8 9 (0478-0480) về 1 ✅ Trúng kỳ 2
-📋 Kế hoạch tiếp Đuôi 0480-0482: 3 4 5 6 9
+🧊 Siêu Tốc 45 Giây đang THUA 5 kỳ liên tiếp
+Kỳ 01/11/2026-1299: … → dàn 0 2 3 6 8 (1297-1299) về 7 ❌ Trượt
+📋 Kế hoạch tiếp Đuôi 1300-1302: 1 4 5 7 9
 ```
 
 Tin báo chuỗi gửi vào nơi nhận báo chuỗi **và** cả chủ đề/chat của chính game đó (tắt được trong admin).
 Gán nơi nhận: vào chủ đề (vd chủ đề 461) gõ `/bind chuỗi`, hoặc nhập `chat_id:461` trong admin → Cài đặt → Báo chuỗi.
-Ngưỡng thắng / thua chỉnh riêng (0 = tắt). Bot đếm trên 30 dàn gần nhất; nếu cả 30 cùng một chuỗi sẽ hiện dạng `29+`.
+Ngưỡng W / L chỉnh riêng (0 = tắt).
 
 ## Thành viên (/member)
 
