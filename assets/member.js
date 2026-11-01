@@ -69,13 +69,13 @@ async function loadHistory(page) {
   try {
     const r = await api(`history&game=${encodeURIComponent(game)}&page=${page}`);
     const st = r.stats;
-    $('h-stats').innerHTML = st.plans
-      ? `${st.plans} dàn gần nhất: <b>${st.win1}</b> trúng kỳ 1 (${Math.round(st.win1 * 100 / st.plans)}%) · ${st.winLate} trúng muộn · <b>${st.lose}</b> trượt`
-      : 'Chưa có dàn nào kết thúc trong lịch sử đã lưu.';
+    $('h-stats').innerHTML = st.n
+      ? `${st.n} kỳ gần nhất: <span class="ball w">W</span> <b>${st.w}</b> (${Math.round(st.w * 100 / st.n)}%) · <span class="ball l">L</span> <b>${st.l}</b>`
+      : 'Chưa có kỳ nào trong lịch sử đã lưu.';
     $('h-rows').innerHTML = r.rows.map((d) => {
-      const cls = d.win_status === 1 ? (d.hit_turn <= 1 ? 'b-ok' : 'b-warn') : d.win_status === 0 ? 'b-err' : 'b-off';
+      const wl = d.win_status === null ? '' : `<span class="ball ${d.win_status === 1 ? 'w">W' : 'l">L'}</span>`;
       return `<tr><td>${esc(d.issue)}</td><td><b>${esc(d.result)}</b></td><td>${esc(d.plan_check)}</td><td><b>${esc(d.play_result)}</b></td>
-        <td><span class="badge ${cls}">${esc(d.plan_status) || '–'}</span></td><td>${esc(d.next_plan)} <span class="muted">${esc(d.next_range)}</span></td>
+        <td>${wl}</td><td>${esc(d.next_plan)} <span class="muted">${esc(d.next_range)}</span></td>
         <td class="muted">${new Date(d.created_at.replace(' ', 'T')).toLocaleString('vi-VN')}</td></tr>`;
     }).join('') || '<tr><td colspan="7" class="muted">Chưa có lịch sử. Lịch sử được lưu từ khi bật database.</td></tr>';
     const pages = Math.min(20, Math.ceil(r.total / r.perPage));
@@ -87,7 +87,7 @@ async function loadHistory(page) {
 let daily = [];
 const SVG = 'http://www.w3.org/2000/svg';
 const ddmm = (d) => d.slice(8, 10) + '/' + d.slice(5, 7);
-const pct = (r) => { const n = r.win1 + r.late + r.lose; return n ? Math.round(r.win1 * 100 / n) : null; };
+const pct = (r) => { const n = r.w + r.l; return n ? Math.round(r.w * 100 / n) : null; };
 
 async function loadDaily() {
   const game = $('h-game').value;
@@ -130,9 +130,9 @@ function showTip(box, tip, html, x) {
 }
 
 function tipHtml(r) {
-  const n = r.win1 + r.late + r.lose, p = pct(r);
-  return `<b>${ddmm(r.day)}</b> · ${n} dàn<br>✅ Trúng kỳ 1: <b>${r.win1}</b><br>⏳ Trúng muộn: <b>${r.late}</b><br>❌ Trượt: <b>${r.lose}</b>`
-    + (p === null ? '' : `<br>% trúng kỳ 1: <b>${p}%</b>`);
+  const n = r.w + r.l, p = pct(r);
+  return `<b>${ddmm(r.day)}</b> · ${n} kỳ<br>W: <b>${r.w}</b><br>L: <b>${r.l}</b>`
+    + (p === null ? '' : `<br>Tỉ lệ W: <b>${p}%</b>`);
 }
 
 // Khung chung: trục y với đường lưới, nhãn ngày ở dưới; trả về hàm toạ độ
@@ -164,12 +164,12 @@ function renderDaily() {
   if (!daily.length) return;
   // --- Cột chồng: số dàn mỗi ngày ---
   const box = $('d-bars'), tip = tipFor(box);
-  const max = niceMax(Math.max(...daily.map((r) => r.win1 + r.late + r.lose)));
+  const max = niceMax(Math.max(...daily.map((r) => r.w + r.l)));
   const f = frame(box, 200, max, (v) => Math.round(v));
   const bw = Math.min(28, f.step * 0.6);
   daily.forEach((r, i) => {
     const x = f.L + f.step * i + (f.step - bw) / 2;
-    const segs = [['win1', 'var(--c-good)'], ['late', 'var(--c-warn)'], ['lose', 'var(--c-bad)']].filter(([k]) => r[k] > 0);
+    const segs = [['w', 'var(--c-good)'], ['l', 'var(--c-bad)']].filter(([k]) => r[k] > 0);
     let acc = 0;
     segs.forEach(([k, color], j) => {
       const y0 = f.y(acc), y1 = f.y(acc + r[k]);
@@ -206,8 +206,8 @@ function renderDaily() {
   if (last) svgEl('text', { x: last[0], y: g.y(last[1]) - 10, 'text-anchor': 'middle', style: 'fill:var(--text);font-weight:600' }, g.svg).textContent = last[1] + '%';
 
   // --- Bảng số liệu ---
-  $('d-table').innerHTML = `<table><thead><tr><th>Ngày</th><th>✅ Trúng kỳ 1</th><th>⏳ Trúng muộn</th><th>❌ Trượt</th><th>Tổng dàn</th><th>% trúng kỳ 1</th></tr></thead><tbody>`
-    + [...daily].reverse().map((r) => { const p = pct(r); return `<tr><td>${ddmm(r.day)}</td><td>${r.win1}</td><td>${r.late}</td><td>${r.lose}</td><td>${r.win1 + r.late + r.lose}</td><td>${p === null ? '–' : p + '%'}</td></tr>`; }).join('')
+  $('d-table').innerHTML = `<table><thead><tr><th>Ngày</th><th>W</th><th>L</th><th>Tổng kỳ</th><th>Tỉ lệ W</th></tr></thead><tbody>`
+    + [...daily].reverse().map((r) => { const p = pct(r); return `<tr><td>${ddmm(r.day)}</td><td>${r.w}</td><td>${r.l}</td><td>${r.w + r.l}</td><td>${p === null ? '–' : p + '%'}</td></tr>`; }).join('')
     + '</tbody></table>';
 }
 
@@ -217,14 +217,6 @@ window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer
 // ---- Bảng cầu WIN / LOST ----
 const ROAD_ROWS = 6, CELL = 30;
 let roadTimer = null;
-
-// Phân loại 1 dàn: W thắng (trúng trong winMaxTurn kỳ đầu), L thua; trúng muộn tuỳ cài đặt
-function classify(it, winMaxTurn, lateAs) {
-  const [turnNum, ws, turn] = it;
-  if (ws === 1 && turn <= winMaxTurn) return 'W';
-  if (ws === 1) return lateAs === 'lose' ? 'L' : 'M';
-  return 'L';
-}
 
 // Xếp kiểu "big road": cùng kết quả đi xuống, hết hàng hoặc vướng ô thì rẽ phải; đổi kết quả sang cột mới
 function layoutRoad(items) {
@@ -249,20 +241,16 @@ function layoutRoad(items) {
 }
 
 function roadTitle(it) {
-  const [turnNum, ws, turn, range, plan, open] = it.raw;
-  const st = ws === 0 ? 'Trượt cả dàn' : `Trúng kỳ ${turn}` + (it.type === 'L' ? ' (muộn – tính là thua)' : it.type === 'M' ? ' (muộn – không tính)' : '');
-  return `Dàn ${plan} (${range})\nKết thúc kỳ ${turnNum}\nSố về: ${open || '–'}\n${st}`;
+  const [issue, wl, plan, open, nth] = it.raw;
+  return `Kỳ ${issue}\nDàn ${plan} (kỳ thứ ${nth} của dàn)\nSố về: ${open || '–'}\n${wl === 'W' ? 'W – trúng' : 'L – không trúng'}`;
 }
 
 async function loadRoad() {
   clearTimeout(roadTimer);
   try {
     const r = await api('road&limit=' + $('road-limit').value);
-    $('road-late-legend').innerHTML = r.lateAs === 'lose'
-      ? '<span class="ball l late">L</span> Trúng muộn – tính là thua'
-      : '<span class="ball" style="background:var(--muted)">M</span> Trúng muộn – không tính';
     $('roads').innerHTML = r.games.map((g) => {
-      const items = g.road.map((raw) => ({ raw, type: classify(raw, r.winMaxTurn, r.lateAs) }));
+      const items = g.road.map((raw) => ({ raw, type: raw[1] }));
       const wins = items.filter((i) => i.type === 'W').length, losses = items.filter((i) => i.type === 'L').length;
       let streak = 0;
       for (let i = items.length - 1; i >= 0 && items[i].type === items[items.length - 1].type; i--) streak++;
@@ -270,11 +258,10 @@ async function loadRoad() {
       const placed = layoutRoad(items);
       const cols = Math.max(...placed.map((p) => p.c + 1), 1);
       const cells = placed.map((p, i) => {
-        const cls = p.it.type === 'W' ? 'w' : p.it.type === 'L' ? 'l' + (p.it.raw[1] === 1 ? ' late' : '') : '';
-        const style = p.it.type === 'M' ? ' style="background:var(--muted)"' : '';
-        return `<div class="cell" style="grid-column:${p.c + 1};grid-row:${p.r + 1}"><span class="ball ${cls}${i === placed.length - 1 ? ' last' : ''}"${style} title="${esc(roadTitle(p.it))}">${p.it.type}</span></div>`;
+        const cls = p.it.type === 'W' ? 'w' : 'l';
+        return `<div class="cell" style="grid-column:${p.c + 1};grid-row:${p.r + 1}"><span class="ball ${cls}${i === placed.length - 1 ? ' last' : ''}" title="${esc(roadTitle(p.it))}">${p.it.type}</span></div>`;
       }).join('');
-      const streakTxt = lastType && lastType !== 'M' ? `Đang ${lastType === 'W' ? '🔥 WIN' : '🧊 LOST'} ${streak} ván` : '';
+      const streakTxt = lastType ? `Đang ${lastType === 'W' ? '🔥 WIN' : '🧊 LOST'} ${streak} kỳ` : '';
       return `<div class="card">
         <div class="road-head">
           <h2>${esc(g.name)}</h2>

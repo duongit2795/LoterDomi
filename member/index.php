@@ -118,15 +118,14 @@ $allowRegister = $enabled && Config::get()['members']['allowRegister'];
     <div class="card">
       <div class="row" style="margin-top:0;justify-content:space-between">
         <div class="legend" style="margin:0">
-          <span><span class="ball w">W</span> Thắng (trúng kỳ 1)</span>
-          <span><span class="ball l">L</span> Thua (trượt)</span>
-          <span id="road-late-legend"><span class="ball l late">L</span> Trúng muộn – tính là thua</span>
+          <span><span class="ball w">W</span> Kỳ dàn trúng</span>
+          <span><span class="ball l">L</span> Kỳ dàn không trúng</span>
         </div>
         <select id="road-limit" style="width:auto" onchange="loadRoad()">
-          <option value="50">50 dàn gần nhất</option><option value="100" selected>100 dàn gần nhất</option><option value="200">200 dàn gần nhất</option>
+          <option value="100">100 kỳ gần nhất</option><option value="200" selected>200 kỳ gần nhất</option><option value="500">500 kỳ gần nhất</option><option value="1000">1000 kỳ gần nhất</option>
         </select>
       </div>
-      <p class="muted" style="margin:8px 0 0">Mỗi ô là một dàn kế hoạch đã kết thúc. Cùng kết quả xếp xuống cùng cột, đổi kết quả thì sang cột mới. Rê chuột vào ô để xem chi tiết.</p>
+      <p class="muted" style="margin:8px 0 0">Mỗi ô là một kỳ: W nếu dàn kế hoạch đang nuôi trúng ở kỳ đó, L nếu không trúng. Cùng kết quả xếp xuống cùng cột, đổi kết quả thì sang cột mới. Rê chuột vào ô để xem chi tiết.</p>
     </div>
     <div id="roads"></div>
   </section>
@@ -140,7 +139,7 @@ $allowRegister = $enabled && Config::get()['members']['allowRegister'];
     </div>
     <div class="card">
       <div class="row" style="margin-top:0;justify-content:space-between">
-        <h2 style="margin:0">Tỉ lệ trúng theo ngày</h2>
+        <h2 style="margin:0">W / L theo ngày</h2>
         <div class="row" style="margin:0">
           <select id="d-days" style="width:auto" onchange="loadDaily()">
             <option value="7">7 ngày</option><option value="14" selected>14 ngày</option><option value="30">30 ngày</option>
@@ -148,14 +147,13 @@ $allowRegister = $enabled && Config::get()['members']['allowRegister'];
           <button class="btn sec" onclick="toggleDailyTable()">Bảng số liệu</button>
         </div>
       </div>
-      <div class="chart-title">Số dàn kết thúc mỗi ngày</div>
+      <div class="chart-title">Số kỳ W / L mỗi ngày</div>
       <div class="legend">
-        <span><i style="background:var(--c-good)"></i>✅ Trúng kỳ 1</span>
-        <span><i style="background:var(--c-warn)"></i>⏳ Trúng muộn</span>
-        <span><i style="background:var(--c-bad)"></i>❌ Trượt</span>
+        <span><i style="background:var(--c-good)"></i>W – kỳ dàn trúng</span>
+        <span><i style="background:var(--c-bad)"></i>L – kỳ dàn không trúng</span>
       </div>
       <div class="chart" id="d-bars"></div>
-      <div class="chart-title">% dàn trúng ngay kỳ 1</div>
+      <div class="chart-title">Tỉ lệ W mỗi ngày</div>
       <div class="chart" id="d-rate"></div>
       <div id="d-table" class="hidden" style="overflow-x:auto;margin-top:12px"></div>
     </div>
@@ -163,7 +161,7 @@ $allowRegister = $enabled && Config::get()['members']['allowRegister'];
       <h2>Lịch sử kỳ</h2>
       <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>Kỳ</th><th>Kết quả</th><th>Dàn</th><th>Về</th><th>Trạng thái</th><th>Kế hoạch kỳ tiếp</th><th>Lúc</th></tr></thead>
+          <thead><tr><th>Kỳ</th><th>Kết quả</th><th>Dàn</th><th>Về</th><th>W/L</th><th>Kế hoạch kỳ tiếp</th><th>Lúc</th></tr></thead>
           <tbody id="h-rows"></tbody>
         </table>
       </div>

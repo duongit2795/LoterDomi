@@ -37,15 +37,14 @@ try {
             out(['games' => $games, 'serverTime' => Util::nowMs()]);
 
         case 'GET road':
-            $limit = min(Road::KEEP, max(20, (int) ($_GET['limit'] ?? 100)));
-            $st = Config::get()['monitor']['streak'];
+            $limit = min(Road::KEEP, max(20, (int) ($_GET['limit'] ?? 200)));
             $states = Monitor::snapshot()['games'] ?? [];
             $games = [];
             foreach (Monitor::activeGames() as $g) {
                 $games[] = ['id' => $g['id'], 'name' => $g['name'], 'road' => Road::get($g['id'], $limit),
                     'nextIssue' => $states[$g['id']]['nextIssue'] ?? '', 'plan' => $states[$g['id']]['plan'] ?? ''];
             }
-            out(['games' => $games, 'winMaxTurn' => max(1, (int) $st['winMaxTurn']), 'lateAs' => $st['lateAs']]);
+            out(['games' => $games]);
 
         case 'GET history':
             $gameId = (string) ($_GET['game'] ?? '');

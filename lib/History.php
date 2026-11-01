@@ -43,44 +43,33 @@ class History
         return ['rows' => $rows, 'total' => $total, 'page' => $page, 'perPage' => $perPage];
     }
 
-    // Số dàn kết thúc theo từng ngày (N ngày gần nhất, kể cả ngày không có dữ liệu)
+    // Số kỳ W / L theo từng ngày (N ngày gần nhất, kể cả ngày không có dữ liệu).
+    // W = dàn đang nuôi trúng ở kỳ đó, L = không trúng (trượt hoặc đang nuôi tiếp)
     public static function daily($gameId, $days = 14)
     {
         $days = min(90, max(1, (int) $days));
         $from = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
-        $rows = Db::all("SELECT DATE(created_at) d,
-                SUM(win_status = 1 AND COALESCE(hit_turn, 1) <= 1) win1,
-                SUM(win_status = 1 AND hit_turn > 1) late,
-                SUM(win_status = 0) lose
-            FROM draws WHERE game_id = ? AND win_status IN (0, 1) AND created_at >= ?
+        $rows = Db::all("SELECT DATE(created_at) d, SUM(win_status = 1) w, SUM(win_status <> 1) l
+            FROM draws WHERE game_id = ? AND win_status IS NOT NULL AND created_at >= ?
             GROUP BY DATE(created_at)", [$gameId, $from . ' 00:00:00']);
         $byDay = [];
         foreach ($rows as $r) {
-            $byDay[$r['d']] = ['win1' => (int) $r['win1'], 'late' => (int) $r['late'], 'lose' => (int) $r['lose']];
+            $byDay[$r['d']] = ['w' => (int) $r['w'], 'l' => (int) $r['l']];
         }
         $out = [];
         for ($i = $days - 1; $i >= 0; $i--) {
             $d = date('Y-m-d', strtotime("-$i days"));
-            $out[] = ['day' => $d] + ($byDay[$d] ?? ['win1' => 0, 'late' => 0, 'lose' => 0]);
+            $out[] = ['day' => $d] + ($byDay[$d] ?? ['w' => 0, 'l' => 0]);
         }
         return $out;
     }
 
-    // Thống kê các dàn đã kết thúc trong N kỳ gần nhất
+    // Thống kê W / L của N kỳ gần nhất
     public static function stats($gameId, $limit = 200)
     {
-        $rows = Db::all('SELECT win_status, hit_turn FROM draws WHERE game_id = ? AND win_status IN (0, 1)
-            ORDER BY id DESC LIMIT ' . (int) $limit, [$gameId]);
-        $out = ['plans' => count($rows), 'win1' => 0, 'winLate' => 0, 'lose' => 0];
-        foreach ($rows as $r) {
-            if ((int) $r['win_status'] === 0) {
-                $out['lose']++;
-            } elseif ((int) $r['hit_turn'] <= 1) {
-                $out['win1']++;
-            } else {
-                $out['winLate']++;
-            }
-        }
-        return $out;
+        $r = Db::one('SELECT COUNT(*) n, COALESCE(SUM(win_status = 1), 0) w FROM (
+                SELECT win_status FROM draws WHERE game_id = ? AND win_status IS NOT NULL ORDER BY id DESC LIMIT ' . (int) $limit . '
+            ) t', [$gameId]);
+        return ['n' => (int) $r['n'], 'w' => (int) $r['w'], 'l' => (int) $r['n'] - (int) $r['w']];
     }
 }

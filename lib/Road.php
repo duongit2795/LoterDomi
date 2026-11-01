@@ -1,14 +1,52 @@
 <?php
-// Lịch sử dàn đã kết thúc của từng game để vẽ bảng cầu WIN/LOST.
-// API chỉ trả ~30 dàn gần nhất nên worker gộp dần vào file riêng (chỉ ghi khi có dàn mới).
+// Lưu kết quả TỪNG KỲ của dàn kế hoạch: W = dàn đang nuôi trúng ở kỳ đó, L = không trúng.
+// API chỉ trả mỗi dàn 1 dòng (trúng ở kỳ thứ mấy), nên tách ngược ra từng kỳ:
+// trúng kỳ 3 → L L W; trượt cả dàn → L L L; đang nuôi (đã qua n kỳ) → n lần L.
+// Worker gộp dần vào data/road_ky.php, chỉ ghi khi có kỳ mới.
 class Road
 {
-    const KEEP = 300;
+    const KEEP = 1000;
+    const STORE = 'road_ky';
+
+    // Tách 1 dòng kế hoạch thành các kỳ đã mở: [[mã kỳ, 'W'|'L', dàn, số về, kỳ thứ trong dàn], ...]
+    public static function expand(array $r)
+    {
+        if (!preg_match('/^(.*)-(\d+)$/', (string) ($r['turnNum'] ?? ''), $tm)
+            || !preg_match('/^(\d+)\s*-\s*(\d+)$/', (string) ($r['turnNumRange'] ?? ''), $rm)) {
+            return [];
+        }
+        $start = (int) $rm[1];
+        $end = (int) $rm[2];
+        if ($end < $start) {
+            return []; // dàn vắt qua nửa đêm (đánh số lại từ đầu) – bỏ qua
+        }
+        $ws = (int) ($r['winStatus'] ?? 2);
+        $sort = (int) ($r['currentTurnSort'] ?? 0);
+        // Số kỳ của dàn đã mở thưởng
+        $n = $ws === 2 ? $sort - 1 : $sort;
+        $n = min($n, $end - $start + 1);
+        $plan = str_replace(',', ' ', (string) ($r['planNumber'] ?? ''));
+        $out = [];
+        for ($i = 0; $i < $n; $i++) {
+            $issue = $tm[1] . '-' . str_pad((string) ($start + $i), strlen($rm[1]), '0', STR_PAD_LEFT);
+            $win = $ws === 1 && $i === $n - 1;
+            // Chỉ biết số về của kỳ mới nhất trong dàn (kỳ API vừa đối chiếu)
+            $open = $issue === $r['turnNum'] ? (string) ($r['openNum'] ?? '') : '';
+            $out[] = [$issue, $win ? 'W' : 'L', $plan, $open, $i + 1];
+        }
+        return $out;
+    }
+
+    // Khoá sắp xếp theo thời gian: "01/11/2026-0939" → "20261101-0939"
+    private static function sortKey($issue)
+    {
+        return preg_match('#^(\d{2})/(\d{2})/(\d{4})-(\d+)$#', $issue, $m) ? "$m[3]$m[2]$m[1]-" . str_pad($m[4], 6, '0', STR_PAD_LEFT) : $issue;
+    }
 
     // $rows: dòng kế hoạch từ API (mới nhất trước)
     public static function merge($gameId, array $rows)
     {
-        $all = Store::read('road', []);
+        $all = Store::read(self::STORE, []);
         $list = $all[$gameId] ?? [];
         $seen = [];
         foreach ($list as $it) {
@@ -16,25 +54,27 @@ class Road
         }
         $fresh = [];
         foreach ($rows as $r) {
-            $ws = (int) ($r['winStatus'] ?? 2);
-            if ($ws === 2 || empty($r['turnNum']) || isset($seen[$r['turnNum']])) {
-                continue;
+            foreach (self::expand($r) as $k) {
+                if (!isset($seen[$k[0]])) {
+                    $seen[$k[0]] = true;
+                    $fresh[] = $k;
+                }
             }
-            // [kỳ kết thúc, winStatus, trúng ở kỳ thứ, khoảng kỳ, dàn, số về]
-            $fresh[] = [$r['turnNum'], $ws, (int) ($r['currentTurnSort'] ?? 0), (string) ($r['turnNumRange'] ?? ''),
-                str_replace(',', ' ', (string) ($r['planNumber'] ?? '')), (string) ($r['openNum'] ?? '')];
         }
         if (!$fresh) {
             return;
         }
-        $list = array_merge($list, array_reverse($fresh));
+        $list = array_merge($list, $fresh);
+        usort($list, function ($a, $b) {
+            return strcmp(self::sortKey($a[0]), self::sortKey($b[0]));
+        });
         $all[$gameId] = array_slice($list, -self::KEEP);
-        Store::write('road', $all);
+        Store::write(self::STORE, $all);
     }
 
     public static function get($gameId, $limit)
     {
-        $list = Store::read('road', [])[$gameId] ?? [];
+        $list = Store::read(self::STORE, [])[$gameId] ?? [];
         return array_slice($list, -max(1, (int) $limit));
     }
 }
