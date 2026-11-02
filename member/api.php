@@ -37,7 +37,7 @@ try {
             out(['games' => $games, 'serverTime' => Util::nowMs()]);
 
         case 'GET road':
-            out(Road::payload((int) ($_GET['limit'] ?? 200)));
+            out(Road::payload((int) ($_GET['limit'] ?? 200), '', (string) ($_GET['src'] ?? '')));
 
         case 'GET history':
             $gameId = (string) ($_GET['game'] ?? '');

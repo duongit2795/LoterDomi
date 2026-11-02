@@ -190,6 +190,9 @@ try {
             Logger::info('Admin xoá thành viên #' . (int) ($body['id'] ?? 0));
             out(['ok' => true]);
 
+        case 'GET methods-stats':
+            out(Method::stats(200));
+
         case 'GET update-check':
             out(Updater::check());
 

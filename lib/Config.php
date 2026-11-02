@@ -106,6 +106,10 @@ class Config
                 'allowRegister' => true,
                 'requireApproval' => false,
             ],
+            // Phương pháp tự dự đoán (không dùng dàn của API)
+            'methods' => [
+                ['id' => 'random', 'name' => 'Ngẫu nhiên', 'type' => 'random', 'size' => 5, 'enabled' => true, 'notify' => true],
+            ],
             'games' => [],
         ];
     }
@@ -151,6 +155,7 @@ class Config
                 }
             }
             $cfg['games'] = array_map([self::class, 'normalizeGame'], $cfg['games'] ?: []);
+            $cfg['methods'] = array_map(['Method', 'normalize'], $cfg['methods'] ?: []);
             self::$cache = $cfg;
         }
         return self::$cache;
@@ -159,6 +164,9 @@ class Config
     public static function update(array $partial)
     {
         $cfg = Util::merge(self::get(true), $partial);
+        if (isset($partial['methods'])) {
+            $cfg['methods'] = array_map(['Method', 'normalize'], $partial['methods']);
+        }
         if (isset($partial['games'])) {
             $cfg['games'] = array_map([self::class, 'normalizeGame'], $partial['games']);
         }

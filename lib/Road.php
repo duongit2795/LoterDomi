@@ -94,21 +94,39 @@ class Road
         ];
     }
 
-    // Dữ liệu cho bảng cầu của các game đang bật
-    public static function payload($limit, $onlyGameId = '')
+    // Dữ liệu cho bảng cầu của các game đang bật.
+    // $source = '' → cầu theo dàn kế hoạch của API; = id phương pháp → cầu theo dự đoán của phương pháp đó
+    public static function payload($limit, $onlyGameId = '', $source = '')
     {
         $limit = min(self::KEEP, max(20, (int) $limit));
+        $method = $source !== '' ? Method::find($source) : null;
+        if ($source !== '' && (!$method || !$method['enabled'])) {
+            throw new RuntimeException('Phương pháp không tồn tại hoặc đang tắt');
+        }
         $states = Monitor::snapshot()['games'] ?? [];
         $games = [];
         foreach (Monitor::activeGames() as $g) {
             if ($onlyGameId !== '' && $g['id'] !== $onlyGameId) {
                 continue;
             }
-            $games[] = ['id' => $g['id'], 'name' => $g['name'], 'road' => self::get($g['id'], $limit),
-                'nextIssue' => $states[$g['id']]['nextIssue'] ?? '', 'nextTime' => $states[$g['id']]['nextTime'] ?? null,
-                'plan' => $states[$g['id']]['plan'] ?? ''];
+            $st = $states[$g['id']] ?? [];
+            $next = $st['nextIssue'] ?? '';
+            if ($method) {
+                $road = Method::road($method['id'], $g['id'], $limit);
+                $p = Method::pending($method['id'], $g['id'], $next);
+                $plan = $p ? $p[1] : '';
+            } else {
+                $road = self::get($g['id'], $limit);
+                $plan = $st['plan'] ?? '';
+            }
+            $games[] = ['id' => $g['id'], 'name' => $g['name'], 'road' => $road,
+                'nextIssue' => $next, 'nextTime' => $st['nextTime'] ?? null, 'plan' => $plan];
         }
-        return ['games' => $games, 'serverTime' => Util::nowMs()];
+        $sources = [['id' => '', 'name' => 'Dàn API']];
+        foreach (Method::enabled() as $m) {
+            $sources[] = ['id' => $m['id'], 'name' => 'PP ' . $m['name']];
+        }
+        return ['games' => $games, 'sources' => $sources, 'source' => $source, 'serverTime' => Util::nowMs()];
     }
 
     public static function get($gameId, $limit)

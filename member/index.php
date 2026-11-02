@@ -121,6 +121,7 @@ $allowRegister = $enabled && Config::get()['members']['allowRegister'];
           <span><span class="ball w">W</span> Kỳ dàn trúng</span>
           <span><span class="ball l">L</span> Kỳ dàn không trúng</span>
         </div>
+        <select id="road-src" style="width:auto" onchange="loadRoad()"><option value="">Dàn API</option></select>
         <select id="road-limit" style="width:auto" onchange="loadRoad()">
           <option value="100">100 kỳ gần nhất</option><option value="200" selected>200 kỳ gần nhất</option><option value="500">500 kỳ gần nhất</option><option value="1000">1000 kỳ gần nhất</option>
         </select>

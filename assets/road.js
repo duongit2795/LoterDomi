@@ -27,7 +27,7 @@
 
   function title(raw) {
     const [issue, wl, plan, open, nth] = raw;
-    return `Kỳ ${issue}\nDàn ${plan} (kỳ thứ ${nth} của dàn)\nSố về: ${open || '–'}\n${wl === 'W' ? 'W – trúng' : 'L – không trúng'}`;
+    return `Kỳ ${issue}\nDàn ${plan}${nth ? ` (kỳ thứ ${nth} của dàn)` : ''}\nSố về: ${open || '–'}\n${wl === 'W' ? 'W – trúng' : 'L – không trúng'}`;
   }
 
   let skew = 0; // lệch giờ máy người xem so với server

@@ -125,6 +125,12 @@ class Monitor
                 ];
             }
             $s = array_merge($s, $r['data'], ['lastError' => null]);
+            // Phương pháp tự dự đoán: chấm kỳ vừa mở + tạo dự đoán kỳ tiếp
+            try {
+                Method::process($game, $s);
+            } catch (Throwable $e) {
+                Logger::warn("[{$game['name']}] phương pháp dự đoán lỗi: " . $e->getMessage());
+            }
 
             // Kỳ mới có kết quả
             if ($s['issue'] !== '' && $s['result'] !== '' && (!isset($s['notifiedIssue']) || $s['notifiedIssue'] !== $s['issue'])) {
@@ -154,6 +160,8 @@ class Monitor
                                 // Đã báo kỳ tiếp trong tin này, không nhắc riêng nữa
                                 $s['remindedIssue'] = $s['nextIssue'];
                             }
+                            $mLines = Method::messageLines($game, $s, $cfg['telegram']['parseMode'] === 'HTML');
+                            $text .= $mLines !== '' ? "\n\n" . $mLines : '';
                             $img = $cfg['monitor']['roadImage'];
                             $s['imgCount'] = (int) ($s['imgCount'] ?? 0) + 1;
                             $png = null;

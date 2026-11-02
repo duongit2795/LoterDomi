@@ -52,6 +52,7 @@ function fill() {
   const st = m.streak;
   $('st-enabled').checked = st.enabled; $('st-win').value = st.winMin; $('st-lose').value = st.loseMin; $('st-game').checked = st.alsoGameTargets; $('st-targets').value = st.targets.join(', ');
   $('tpl-streak').value = cfg.templates.streak;
+  renderMethods(); loadMethodStats();
   $('pr-enabled').checked = cfg.publicRoad.enabled; $('pr-key').value = cfg.publicRoad.key; updatePublicLink();
   $('tpl-result').value = cfg.templates.result; $('tpl-upcoming').value = cfg.templates.upcoming; $('tpl-next').value = cfg.templates.next;
   $('g-headers').value = JSON.stringify(cfg.globalHeaders, null, 2);
@@ -242,6 +243,42 @@ async function changePassword() {
     $('pw-cur').value = $('pw-new').value = '';
     toast('Đã đổi mật khẩu');
   });
+}
+
+// ---- Phương pháp tự dự đoán ----
+const METHOD_TYPES = { random: 'Ngẫu nhiên' };
+function renderMethods() {
+  $('methods').innerHTML = cfg.methods.map((m, i) => `<tr data-i="${i}">
+    <td><input data-k="name" value="${esc(m.name)}" style="min-width:140px"></td>
+    <td><select data-k="type">${Object.entries(METHOD_TYPES).map(([v, l]) => `<option value="${v}" ${m.type === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+    <td><input data-k="size" type="number" min="1" max="9" value="${m.size}" style="width:80px"></td>
+    <td><input data-k="enabled" type="checkbox" ${m.enabled ? 'checked' : ''} style="width:auto"></td>
+    <td><input data-k="notify" type="checkbox" ${m.notify ? 'checked' : ''} style="width:auto"></td>
+    <td><button class="btn danger" type="button" onclick="removeMethod(${i})">Xoá</button></td>
+  </tr>`).join('') || '<tr><td colspan="6" class="muted">Chưa có phương pháp.</td></tr>';
+}
+function readMethods() {
+  document.querySelectorAll('#methods tr[data-i]').forEach((tr) => {
+    const m = cfg.methods[tr.dataset.i];
+    tr.querySelectorAll('[data-k]').forEach((el) => {
+      const k = el.dataset.k;
+      m[k] = el.type === 'checkbox' ? el.checked : k === 'size' ? +el.value : el.value.trim();
+    });
+  });
+}
+function addMethod() { readMethods(); cfg.methods.push({ id: '', name: 'Ngẫu nhiên ' + (cfg.methods.length + 1), type: 'random', size: 5, enabled: true, notify: false }); renderMethods(); }
+function removeMethod(i) { if (!confirm('Xoá phương pháp này? Lịch sử dự đoán của nó vẫn giữ trong data/ nhưng không hiển thị nữa.')) return; readMethods(); cfg.methods.splice(i, 1); renderMethods(); }
+async function saveMethods() {
+  await run(null, async () => { readMethods(); cfg = await api('save', { methods: cfg.methods }); renderMethods(); loadMethodStats(); toast('Đã lưu'); });
+}
+async function loadMethodStats() {
+  const st = await api('methods-stats').catch(() => []);
+  if (!st.length) { $('methods-stats').innerHTML = ''; return; }
+  const games = st[0].games;
+  $('methods-stats').innerHTML = `<thead><tr><th>Phương pháp</th>${games.map((g) => `<th>${esc(g.name)}</th>`).join('')}</tr></thead><tbody>`
+    + st.map((m) => `<tr><td><b>${esc(m.name)}</b></td>${m.games.map((g) => g.n
+      ? `<td><span style="color:var(--c-good)">${g.w}W</span> / <span style="color:var(--c-bad)">${g.n - g.w}L</span><div class="muted">${Math.round(g.w * 100 / g.n)}% · ${g.n} kỳ</div></td>`
+      : '<td class="muted">–</td>').join('')}</tr>`).join('') + '</tbody>';
 }
 
 function updatePublicLink() {

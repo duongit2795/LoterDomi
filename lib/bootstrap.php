@@ -21,6 +21,7 @@ require __DIR__ . '/Source.php';
 require __DIR__ . '/Monitor.php';
 require __DIR__ . '/Road.php';
 require __DIR__ . '/RoadImage.php';
+require __DIR__ . '/Method.php';
 require __DIR__ . '/Bot.php';
 require __DIR__ . '/Updater.php';
 require __DIR__ . '/Auth.php';

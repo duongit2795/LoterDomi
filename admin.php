@@ -155,6 +155,23 @@ $logged = Auth::check();
       <label class="check"><input type="checkbox" id="st-game"> Gửi thêm vào chủ đề/chat của từng game</label>
     </div>
     <div class="card">
+      <h2>Phương pháp tự dự đoán</h2>
+      <p class="muted">Không dùng dàn kế hoạch của API. Mỗi kỳ bot tự tạo dàn cho kỳ tiếp theo, lưu lại, khi có kết quả thì chấm
+        <b>W</b> (số về – chữ số cuối của kết quả – nằm trong dàn) hoặc <b>L</b>. Xem cầu của từng phương pháp ở trang xem cầu / tab Cầu (chọn nguồn).</p>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Tên</th><th>Kiểu</th><th>Số lượng số</th><th>Bật</th><th>Gửi kèm tin Telegram</th><th></th></tr></thead>
+          <tbody id="methods"></tbody>
+        </table>
+      </div>
+      <div class="row">
+        <button class="btn sec" type="button" onclick="addMethod()">+ Thêm phương pháp</button>
+        <button class="btn" type="button" onclick="saveMethods()">Lưu phương pháp</button>
+      </div>
+      <h2 style="margin-top:18px">Kết quả 200 kỳ gần nhất</h2>
+      <div style="overflow-x:auto"><table id="methods-stats"></table></div>
+    </div>
+    <div class="card">
       <h2>Trang xem cầu công khai</h2>
       <p class="muted">Ai có link là xem được bảng cầu W/L của các game, không cần đăng nhập.</p>
       <label class="check"><input type="checkbox" id="pr-enabled"> Bật trang xem cầu</label>

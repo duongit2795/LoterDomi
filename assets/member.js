@@ -217,7 +217,12 @@ window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer
 // ---- Bảng cầu WIN / LOST (vẽ bằng assets/road.js) ----
 async function loadRoad() {
   try {
-    const r = await api('road&limit=' + $('road-limit').value);
+    const r = await api('road&limit=' + $('road-limit').value + '&src=' + encodeURIComponent($('road-src').value));
+    const sel = $('road-src');
+    if (sel.options.length !== r.sources.length) {
+      sel.innerHTML = r.sources.map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');
+      sel.value = r.source;
+    }
     RoadView.render($('roads'), r.games, r.serverTime);
   } catch (e) { toast(e.message, true); }
 }

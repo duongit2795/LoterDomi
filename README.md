@@ -107,6 +107,18 @@ Mật khẩu database chỉ lưu trong `data/config.php` trên server (không đ
 Tab **Thành viên** trong admin: bật/tắt tự đăng ký, bắt buộc duyệt tài khoản mới, tìm kiếm, duyệt / khoá / mở khoá,
 đặt lại mật khẩu, xoá, thêm thành viên thủ công. Lịch sử kỳ được lưu vào bảng `draws` từ lúc bật database.
 
+## Phương pháp tự dự đoán
+
+Không dùng dàn kế hoạch của API. Mỗi kỳ bot tự tạo dàn cho **kỳ tiếp theo** và lưu lại (`data/predictions.php`,
+1000 kỳ/game); khi API có kết quả kỳ đó thì chấm **W** nếu số về (chữ số cuối của kết quả – Đuôi) nằm trong dàn, ngược lại **L**.
+
+- Phương pháp đầu tiên: **Ngẫu nhiên** – chọn ngẫu nhiên N số khác nhau từ 0–9 (mặc định 5, dùng `random_int`).
+- Admin → Cài đặt → **Phương pháp tự dự đoán**: thêm/xoá, đặt tên, số lượng số, bật/tắt, gửi kèm tin Telegram;
+  bảng W/L 200 kỳ gần nhất theo từng game.
+- Tin kết quả Telegram có thêm dòng: `🎲 PP Ngẫu nhiên: dàn 0 2 4 8 9 → về 8 ✅ W` và dàn kỳ tiếp.
+- Trang xem cầu / tab Cầu: chọn nguồn **Dàn API** hoặc **PP …** để xem cầu W/L riêng của phương pháp
+  (link: `xemcau.php?src=random`).
+
 ## Ảnh bảng cầu trên Telegram
 
 Ngay khi có kết quả kỳ mới, bot **vẽ ảnh bảng cầu W/L** của game đó (đã gồm kỳ vừa mở) và gửi vào topic/chat của game,

@@ -10,6 +10,7 @@ $pub = is_installed() ? Config::get()['publicRoad'] : ['enabled' => false, 'key'
 $key = (string) ($_GET['k'] ?? '');
 $allowed = $pub['enabled'] && ($pub['key'] === '' || hash_equals($pub['key'], $key));
 $gameId = (string) ($_GET['game'] ?? '');
+$src = (string) ($_GET['src'] ?? '');
 
 if (isset($_GET['json'])) {
     header('Content-Type: application/json; charset=utf-8');
@@ -18,7 +19,12 @@ if (isset($_GET['json'])) {
         http_response_code(403);
         exit(json_encode(['error' => 'Không có quyền xem'], JSON_UNESCAPED_UNICODE));
     }
-    echo json_encode(Road::payload((int) ($_GET['limit'] ?? 200), $gameId) + ['serverTime' => Util::nowMs()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    try {
+        echo json_encode(Road::payload((int) ($_GET['limit'] ?? 200), $gameId, (string) ($_GET['src'] ?? '')), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    } catch (Exception $e) {
+        http_response_code(400);
+        echo json_encode(['error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    }
     exit;
 }
 
@@ -26,9 +32,13 @@ if (!$allowed) {
     http_response_code(403);
 }
 $games = $allowed ? Monitor::activeGames() : [];
-$qs = function (array $extra) use ($key, $gameId) {
-    return '?' . http_build_query(array_filter(['k' => $key, 'game' => $gameId] + $extra, 'strlen'));
+$qs = function (array $extra) use ($key, $gameId, $src) {
+    return '?' . http_build_query(array_filter($extra + ['k' => $key, 'game' => $gameId, 'src' => $src], 'strlen'));
 };
+$sources = [['id' => '', 'name' => 'Dàn API']];
+foreach ($allowed ? Method::enabled() : [] as $m) {
+    $sources[] = ['id' => $m['id'], 'name' => 'PP ' . $m['name']];
+}
 ?><!doctype html>
 <html lang="vi">
 <head>
@@ -57,6 +67,13 @@ $qs = function (array $extra) use ($key, $gameId) {
         <a class="chip <?= $g['id'] === $gameId ? 'on' : '' ?>" href="<?= $h($qs(['game' => $g['id']])) ?>"><?= $h($g['name']) ?></a>
       <?php endforeach; ?>
     </nav>
+    <?php if (count($sources) > 1): ?>
+    <nav class="chips" style="margin-top:8px">
+      <?php foreach ($sources as $so): ?>
+        <a class="chip <?= $so['id'] === $src ? 'on' : '' ?>" href="<?= $h($qs(['src' => $so['id']])) ?>"><?= $h($so['name']) ?></a>
+      <?php endforeach; ?>
+    </nav>
+    <?php endif; ?>
     <div class="row" style="justify-content:space-between;margin-top:10px">
       <div class="legend" style="margin:0">
         <span><span class="ball w">W</span> Dàn trúng</span>
