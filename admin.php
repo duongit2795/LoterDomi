@@ -138,6 +138,8 @@ $logged = Auth::check();
       </div>
       <label class="check"><input type="checkbox" id="m-result"> Báo kết quả khi có kỳ mới</label>
       <label class="check"><input type="checkbox" id="m-combine"> Gửi kèm kế hoạch kỳ tiếp trong tin kết quả (gộp 1 tin, không gửi tin nhắc riêng)</label>
+      <label class="check"><input type="checkbox" id="m-img"> Gửi kèm <b>ảnh bảng cầu</b> trong tin kết quả (ảnh + nội dung tin làm chú thích)</label>
+      <div class="grid" style="max-width:420px"><div><label>Gửi ảnh mỗi … kỳ (1 = kỳ nào cũng gửi, các kỳ khác gửi tin chữ)</label><input id="m-img-every" type="number" min="1"></div></div>
       <label class="check"><input type="checkbox" id="m-upcoming"> Nhắc kỳ sắp mở bằng tin riêng (chỉ dùng khi không gộp)</label>
     </div>
     <div class="card">

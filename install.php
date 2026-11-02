@@ -17,6 +17,7 @@ $checks = [
     ['Extension mbstring', extension_loaded('mbstring'), '', true],
     ['Extension zip (cho Cập nhật)', class_exists('ZipArchive'), '', false],
     ['Extension pdo_mysql (cho thành viên)', extension_loaded('pdo_mysql'), '', false],
+    ['Extension gd + FreeType (cho ảnh cầu)', function_exists('imagettftext'), '', false],
     ['Thư mục data/ ghi được', is_writable(DATA_DIR), DATA_DIR, true],
     ['Thư mục code ghi được (cho Cập nhật)', is_writable(APP_DIR), APP_DIR, false],
 ];

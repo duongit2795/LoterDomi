@@ -54,7 +54,7 @@ Admin → tab **Cập nhật** → **Kiểm tra cập nhật** → **Cập nhậ
 
 - Tạo bot với @BotFather, dán token vào tab **Telegram**, bấm **Kiểm tra token**.
 - Thêm chat ID thủ công, hoặc người dùng tự gõ `/subscribe` (nếu bật cho phép).
-- Lệnh: `/next` (kỳ sắp mở + kế hoạch), `/last` (kết quả gần nhất), `/bind`, `/unbind`, `/topics`, `/subscribe`, `/unsubscribe`, `/id`, `/help`.
+- Lệnh: `/next` (kỳ sắp mở + kế hoạch), `/last` (kết quả gần nhất), `/cau` (ảnh cầu), `/bind`, `/unbind`, `/topics`, `/subscribe`, `/unsubscribe`, `/id`, `/help`.
 - Nhóm/kênh: thêm bot vào nhóm (kênh: cấp quyền admin), gõ `/id` để lấy chat ID.
 - **Gửi theo chủ đề (topic)**: thêm bot vào nhóm và cấp quyền admin, rồi vào từng chủ đề gõ `/bind 1 phút`
   (hoặc `/bind <số>` theo danh sách mà `/bind` liệt kê). Game đó chỉ gửi vào chủ đề này. `/unbind` để bỏ, `/topics` để xem
@@ -106,6 +106,15 @@ Mật khẩu database chỉ lưu trong `data/config.php` trên server (không đ
 
 Tab **Thành viên** trong admin: bật/tắt tự đăng ký, bắt buộc duyệt tài khoản mới, tìm kiếm, duyệt / khoá / mở khoá,
 đặt lại mật khẩu, xoá, thêm thành viên thủ công. Lịch sử kỳ được lưu vào bảng `draws` từ lúc bật database.
+
+## Ảnh bảng cầu trên Telegram
+
+Ngay khi có kết quả kỳ mới, bot **vẽ ảnh bảng cầu W/L** của game đó (đã gồm kỳ vừa mở) và gửi vào topic/chat của game,
+**ảnh + chú thích là nội dung tin kết quả** (vẫn 1 tin/kỳ). Admin → Cài đặt: bật/tắt, hoặc chỉ gửi ảnh mỗi N kỳ
+(các kỳ khác gửi tin chữ). Lệnh `/cau` (trong topic đã `/bind`) hoặc `/cau tên game` để xem ảnh bất kỳ lúc nào.
+
+Cần PHP **GD có FreeType** (aaPanel bật sẵn trong đa số bản PHP). Font DejaVu được kèm trong `assets/fonts/`
+(giấy phép tự do, xem `LICENSE-DejaVu.txt`). Gửi ảnh lỗi tạm thời thì tin chữ được đưa vào hàng chờ, không mất kết quả.
 
 ## Độ trễ
 

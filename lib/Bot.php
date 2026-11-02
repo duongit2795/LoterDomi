@@ -2,7 +2,7 @@
 // Xử lý lệnh Telegram (getUpdates, không cần webhook/SSL)
 class Bot
 {
-    const HELP = "<b>LoterDomi bot</b>\n/next – các kỳ sắp mở + kế hoạch\n/last – kết quả kỳ gần nhất\n/bind tên game – gửi game đó vào chủ đề/chat này (admin nhóm)\n/bind chuỗi – nhận báo chuỗi thắng/thua liên tiếp tại chủ đề này\n/unbind – bỏ gán các game khỏi chủ đề này\n/topics – xem game nào gửi đi đâu\n/subscribe – nhận thông báo tại chat này\n/unsubscribe – huỷ nhận thông báo\n/id – xem chat id, chủ đề id";
+    const HELP = "<b>LoterDomi bot</b>\n/next – các kỳ sắp mở + kế hoạch\n/last – kết quả kỳ gần nhất\n/bind tên game – gửi game đó vào chủ đề/chat này (admin nhóm)\n/bind chuỗi – nhận báo chuỗi thắng/thua liên tiếp tại chủ đề này\n/unbind – bỏ gán các game khỏi chủ đề này\n/cau [tên game] – ảnh bảng cầu W/L\n/topics – xem game nào gửi đi đâu\n/subscribe – nhận thông báo tại chat này\n/unsubscribe – huỷ nhận thông báo\n/id – xem chat id, chủ đề id";
 
     public static function nextText(array $states)
     {
@@ -152,6 +152,35 @@ class Bot
                 return $reply(self::lastText($states));
             case '/id':
                 return $reply("Chat id: <code>$chatId</code>" . ($thread ? "\nChủ đề id: <code>$thread</code>\nNơi nhận (dán vào admin): <code>$here</code>" : ''));
+            case '/cau':
+                // Ảnh cầu: game ghi trong lệnh, hoặc các game đã gán vào chủ đề/chat này
+                if ($arg !== '') {
+                    $found = self::findGame($cfg['games'], $arg);
+                    if (count($found) !== 1) {
+                        return $reply(($found ? 'Có nhiều game khớp, ghi rõ hơn hoặc dùng số:' : 'Không tìm thấy game.') . "\n" . self::gameList($cfg['games']));
+                    }
+                } else {
+                    $found = array_values(array_filter($cfg['games'], function ($g) use ($here) {
+                        return in_array($here, $g['targets'], true);
+                    }));
+                    if (!$found) {
+                        return $reply("Gõ <code>/cau tên game</code> (vd <code>/cau 1 phút</code>), hoặc gõ <code>/cau</code> trong chủ đề đã <code>/bind</code> game.");
+                    }
+                }
+                if (!RoadImage::available()) {
+                    return $reply('Server chưa bật PHP GD/FreeType nên không vẽ được ảnh cầu.');
+                }
+                foreach ($found as $g) {
+                    $png = (new RoadImage())->render($g['name'], Road::get($g['id'], RoadImage::WINDOW), $states[$g['id']] ?? []);
+                    $file = tempnam(sys_get_temp_dir(), 'cau') . '.png';
+                    file_put_contents($file, $png);
+                    try {
+                        Telegram::sendPhoto($here, $file, '📊 Cầu <b>' . Util::h($g['name']) . '</b>');
+                    } finally {
+                        @unlink($file);
+                    }
+                }
+                return null;
             case '/topics':
                 $st = $cfg['monitor']['streak'];
                 return $reply("📌 <b>Nơi gửi của từng game</b>\n" . (self::gameList($cfg['games']) ?: 'Chưa có game.')

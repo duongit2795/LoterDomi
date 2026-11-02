@@ -55,6 +55,11 @@ class Config
                 'intervalSeconds' => 5,
                 'notifyResult' => true,
                 'notifyUpcoming' => true,
+                // Ảnh bảng cầu gửi kèm tin kết quả (ảnh + chú thích là nội dung tin)
+                'roadImage' => [
+                    'enabled' => true,
+                    'every' => 1, // gửi ảnh mỗi N kỳ (1 = kỳ nào cũng gửi); các kỳ khác gửi tin chữ
+                ],
                 // Gửi kèm kế hoạch kỳ tiếp trong tin kết quả, không gửi tin nhắc riêng
                 'combineNext' => true,
                 // Báo chuỗi thắng/thua liên tiếp (vnlotteryplan) vào nơi nhận riêng

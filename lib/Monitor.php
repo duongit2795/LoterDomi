@@ -154,8 +154,21 @@ class Monitor
                                 // Đã báo kỳ tiếp trong tin này, không nhắc riêng nữa
                                 $s['remindedIssue'] = $s['nextIssue'];
                             }
-                            $n = Telegram::broadcast($text, self::targets($game));
-                            Logger::info("[{$game['name']}] báo kết quả kỳ {$s['issue']} → $n chat");
+                            $img = $cfg['monitor']['roadImage'];
+                            $s['imgCount'] = (int) ($s['imgCount'] ?? 0) + 1;
+                            $png = null;
+                            if ($img['enabled'] && $game['type'] === 'vnlp' && RoadImage::available()
+                                && ($s['imgCount'] - 1) % max(1, (int) $img['every']) === 0) {
+                                try {
+                                    $png = (new RoadImage())->render($game['name'], Road::get($id, RoadImage::WINDOW), $s);
+                                } catch (Throwable $e) {
+                                    Logger::warn("[{$game['name']}] vẽ ảnh cầu lỗi: " . $e->getMessage());
+                                }
+                            }
+                            $n = $png !== null
+                                ? Telegram::broadcastPhoto($png, $text, self::targets($game))
+                                : Telegram::broadcast($text, self::targets($game));
+                            Logger::info("[{$game['name']}] báo kết quả kỳ {$s['issue']}" . ($png !== null ? ' (kèm ảnh cầu)' : '') . " → $n chat");
                         }
                         $this->streakAlert($game, $s);
                     }

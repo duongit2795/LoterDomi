@@ -48,7 +48,7 @@ function fill() {
   const m = cfg.monitor;
   $('m-enabled').checked = m.enabled; $('m-interval').value = m.intervalSeconds; $('m-remind').value = m.remindBeforeSeconds;
   $('m-timeout').value = m.requestTimeoutSeconds; $('m-tz').value = cfg.timezone;
-  $('m-result').checked = m.notifyResult; $('m-upcoming').checked = m.notifyUpcoming; $('m-combine').checked = m.combineNext;
+  $('m-result').checked = m.notifyResult; $('m-upcoming').checked = m.notifyUpcoming; $('m-combine').checked = m.combineNext; $('m-img').checked = m.roadImage.enabled; $('m-img-every').value = m.roadImage.every;
   const st = m.streak;
   $('st-enabled').checked = st.enabled; $('st-win').value = st.winMin; $('st-lose').value = st.loseMin; $('st-game').checked = st.alsoGameTargets; $('st-targets').value = st.targets.join(', ');
   $('tpl-streak').value = cfg.templates.streak;
@@ -208,7 +208,7 @@ async function saveSettings(silent) {
       monitor: {
         enabled: $('m-enabled').checked, intervalSeconds: +$('m-interval').value || 5,
         remindBeforeSeconds: +$('m-remind').value || 0, requestTimeoutSeconds: +$('m-timeout').value || 15,
-        notifyResult: $('m-result').checked, notifyUpcoming: $('m-upcoming').checked, combineNext: $('m-combine').checked,
+        notifyResult: $('m-result').checked, notifyUpcoming: $('m-upcoming').checked, combineNext: $('m-combine').checked, roadImage: { enabled: $('m-img').checked, every: Math.max(1, +$('m-img-every').value || 1) },
         streak: {
           enabled: $('st-enabled').checked, winMin: +$('st-win').value || 0, loseMin: +$('st-lose').value || 0, alsoGameTargets: $('st-game').checked,
           targets: $('st-targets').value.split(/[\s,]+/).filter(Boolean),
