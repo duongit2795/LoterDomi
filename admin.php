@@ -158,9 +158,12 @@ $logged = Auth::check();
       <h2>Phương pháp tự dự đoán</h2>
       <p class="muted">Không dùng dàn kế hoạch của API. Mỗi kỳ bot tự tạo dàn cho kỳ tiếp theo, lưu lại, khi có kết quả thì chấm
         <b>W</b> (số về – chữ số cuối của kết quả – nằm trong dàn) hoặc <b>L</b>. Xem cầu của từng phương pháp ở trang xem cầu / tab Cầu (chọn nguồn).</p>
-      <div style="overflow-x:auto">
+      <label><b>Phương pháp đang dùng</b> – tin kết quả, ảnh cầu, báo chuỗi W/L và trang xem cầu đều chạy theo phương pháp này
+        (từng game có thể chọn riêng ở tab Nguồn API)</label>
+      <select id="active-method" style="max-width:360px"></select>
+      <div style="overflow-x:auto;margin-top:12px">
         <table>
-          <thead><tr><th>Tên</th><th>Kiểu</th><th>Số lượng số</th><th>Bật</th><th>Gửi kèm tin Telegram</th><th></th></tr></thead>
+          <thead><tr><th>Tên</th><th>Kiểu</th><th>Số lượng số</th><th>K kỳ</th><th>Bật</th><th>Topic riêng (chat_id:topic)</th><th>Dòng phụ trong topic game</th><th></th></tr></thead>
           <tbody id="methods"></tbody>
         </table>
       </div>

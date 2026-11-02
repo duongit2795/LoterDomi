@@ -43,6 +43,11 @@ class Road
         return preg_match('#^(\d{2})/(\d{2})/(\d{4})-(\d+)$#', $issue, $m) ? "$m[3]$m[2]$m[1]-" . str_pad($m[4], 6, '0', STR_PAD_LEFT) : $issue;
     }
 
+    public static function sortKeyOf($issue)
+    {
+        return self::sortKey($issue);
+    }
+
     // $rows: dòng kế hoạch từ API (mới nhất trước)
     public static function merge($gameId, array $rows)
     {
@@ -95,13 +100,16 @@ class Road
     }
 
     // Dữ liệu cho bảng cầu của các game đang bật.
-    // $source = '' → cầu theo dàn kế hoạch của API; = id phương pháp → cầu theo dự đoán của phương pháp đó
+    // $source: '' = theo phương pháp đang dùng của từng game, 'api' = dàn API, id = phương pháp đó
     public static function payload($limit, $onlyGameId = '', $source = '')
     {
         $limit = min(self::KEEP, max(20, (int) $limit));
-        $method = $source !== '' ? Method::find($source) : null;
-        if ($source !== '' && (!$method || !$method['enabled'])) {
-            throw new RuntimeException('Phương pháp không tồn tại hoặc đang tắt');
+        $forced = null;
+        if ($source !== '' && $source !== 'api') {
+            $forced = Method::find($source);
+            if (!$forced || !$forced['enabled']) {
+                throw new RuntimeException('Phương pháp không tồn tại hoặc đang tắt');
+            }
         }
         $states = Monitor::snapshot()['games'] ?? [];
         $games = [];
@@ -111,18 +119,21 @@ class Road
             }
             $st = $states[$g['id']] ?? [];
             $next = $st['nextIssue'] ?? '';
-            if ($method) {
-                $road = Method::road($method['id'], $g['id'], $limit);
-                $p = Method::pending($method['id'], $g['id'], $next);
+            $m = $source === '' ? Method::activeFor($g) : $forced;
+            if ($m) {
+                $road = Method::road($m['id'], $g['id'], $limit);
+                $p = Method::pending($m['id'], $g['id'], $next);
                 $plan = $p ? $p[1] : '';
+                $srcName = 'PP ' . $m['name'];
             } else {
                 $road = self::get($g['id'], $limit);
                 $plan = $st['plan'] ?? '';
+                $srcName = 'Dàn API';
             }
-            $games[] = ['id' => $g['id'], 'name' => $g['name'], 'road' => $road,
+            $games[] = ['id' => $g['id'], 'name' => $g['name'], 'srcName' => $srcName, 'road' => $road,
                 'nextIssue' => $next, 'nextTime' => $st['nextTime'] ?? null, 'plan' => $plan];
         }
-        $sources = [['id' => '', 'name' => 'Dàn API']];
+        $sources = [['id' => '', 'name' => 'Đang dùng'], ['id' => 'api', 'name' => 'Dàn API']];
         foreach (Method::enabled() as $m) {
             $sources[] = ['id' => $m['id'], 'name' => 'PP ' . $m['name']];
         }

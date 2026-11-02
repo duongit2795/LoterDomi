@@ -152,10 +152,12 @@ class Monitor
                         $this->state['games'][$id] = $s;
                         $this->save();
                         $this->publishVersion();
+                        // Nhìn theo phương pháp đang dùng (dàn API hoặc phương pháp tự dự đoán)
+                        $view = Method::view($game, $s);
                         if ($cfg['monitor']['notifyResult']) {
-                            $text = self::message('result', $game, $s);
+                            $text = self::message('result', $game, $view);
                             if ($cfg['monitor']['combineNext']) {
-                                $next = self::message('next', $game, $s);
+                                $next = self::message('next', $game, $view);
                                 $text .= $next !== '' ? "\n\n" . $next : '';
                                 // Đã báo kỳ tiếp trong tin này, không nhắc riêng nữa
                                 $s['remindedIssue'] = $s['nextIssue'];
@@ -168,7 +170,9 @@ class Monitor
                             if ($img['enabled'] && $game['type'] === 'vnlp' && RoadImage::available()
                                 && ($s['imgCount'] - 1) % max(1, (int) $img['every']) === 0) {
                                 try {
-                                    $png = (new RoadImage())->render($game['name'], Road::get($id, RoadImage::WINDOW), $s);
+                                    $png = !empty($view['method'])
+                                        ? (new RoadImage())->render($game['name'] . ' · ' . $view['play'], Method::road($view['method'], $id, RoadImage::WINDOW), $view)
+                                        : (new RoadImage())->render($game['name'], Road::get($id, RoadImage::WINDOW), $s);
                                 } catch (Throwable $e) {
                                     Logger::warn("[{$game['name']}] vẽ ảnh cầu lỗi: " . $e->getMessage());
                                 }
@@ -178,7 +182,8 @@ class Monitor
                                 : Telegram::broadcast($text, self::targets($game));
                             Logger::info("[{$game['name']}] báo kết quả kỳ {$s['issue']}" . ($png !== null ? ' (kèm ảnh cầu)' : '') . " → $n chat");
                         }
-                        $this->streakAlert($game, $s);
+                        $this->streakAlert($game, $view);
+                        $this->methodTopics($game, $s);
                     }
                 }
             }
@@ -186,6 +191,36 @@ class Monitor
         }
         $this->publishVersion();
         $this->save();
+    }
+
+    // Phương pháp có topic riêng: gửi tin cầu của phương pháp (kết quả W/L + dàn kỳ tiếp + ảnh cầu) vào topic đó
+    private function methodTopics(array $game, array $s)
+    {
+        $cfg = Config::get();
+        if (!$cfg['monitor']['notifyResult'] || $game['type'] !== 'vnlp') {
+            return;
+        }
+        $img = $cfg['monitor']['roadImage'];
+        foreach (Method::enabled() as $m) {
+            if (!$m['targets']) {
+                continue;
+            }
+            $v = Method::view($game, $s, $m);
+            if ($v['planCheck'] === '' && $v['plan'] === '') {
+                continue;
+            }
+            $text = self::message('result', $game, $v) . "\n\n" . self::message('next', $game, $v);
+            $png = null;
+            if ($img['enabled'] && RoadImage::available() && ((int) ($s['imgCount'] ?? 1) - 1) % max(1, (int) $img['every']) === 0) {
+                try {
+                    $png = (new RoadImage())->render($game['name'] . ' · ' . $v['play'], Method::road($m['id'], $game['id'], RoadImage::WINDOW), $v);
+                } catch (Throwable $e) {
+                    Logger::warn("[{$game['name']}] vẽ ảnh cầu {$v['play']} lỗi: " . $e->getMessage());
+                }
+            }
+            $n = $png !== null ? Telegram::broadcastPhoto($png, $text, $m['targets']) : Telegram::broadcast($text, $m['targets']);
+            Logger::info("[{$game['name']}] {$v['play']}: kỳ {$s['issue']} → topic riêng ($n chat)");
+        }
     }
 
     // Báo khi chuỗi W/L liên tiếp (theo từng kỳ) đạt ngưỡng; từ kỳ thứ N trở đi mỗi kỳ báo 1 lần
@@ -225,7 +260,7 @@ class Monitor
             if ($left <= $cfg['monitor']['remindBeforeSeconds'] * 1000 && $left > -5000) {
                 $this->state['games'][$game['id']]['remindedIssue'] = $s['nextIssue'];
                 $this->save();
-                $n = Telegram::broadcast(self::message('upcoming', $game, $s), self::targets($game));
+                $n = Telegram::broadcast(self::message('upcoming', $game, Method::view($game, $s)), self::targets($game));
                 Logger::info("[{$game['name']}] nhắc kỳ {$s['nextIssue']} → $n chat");
             }
         }

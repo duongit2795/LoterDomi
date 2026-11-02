@@ -38,7 +38,7 @@ try {
             out(Config::publicView());
 
         case 'POST save':
-            unset($body['admin'], $body['installed'], $body['cronKey'], $body['db']);
+            unset($body['admin'], $body['installed'], $body['cronKey'], $body['db'], $body['methodTypes'], $body['methodsAdded']);
             Config::update($body);
             Logger::info('Cấu hình đã được cập nhật');
             out(Config::publicView());

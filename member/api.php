@@ -31,7 +31,7 @@ try {
             $keys = ['issue', 'result', 'play', 'planCheck', 'playResult', 'planStatus', 'nextIssue', 'nextTime', 'plan', 'planRange', 'planTurn', 'streakType', 'streakLabel', 'lastError'];
             $games = [];
             foreach (Monitor::activeGames() as $g) {
-                $s = $states[$g['id']] ?? [];
+                $s = Method::view($g, $states[$g['id']] ?? []);
                 $games[] = ['id' => $g['id'], 'name' => $g['name']] + array_intersect_key($s, array_flip($keys));
             }
             out(['games' => $games, 'serverTime' => Util::nowMs()]);

@@ -112,8 +112,18 @@ class Util
         $val = function ($k) use ($vars) {
             return isset($vars[$k]) ? (string) $vars[$k] : '';
         };
+        // Cụm trong ngoặc mà mọi biến đều rỗng thì bỏ cả cụm, vd " (nuôi kỳ {planTurn})"
+        $tpl = preg_replace_callback('/\s*\(([^()]*\{\w+\}[^()]*)\)/u', function ($m) use ($val) {
+            preg_match_all('/\{(\w+)\}/', $m[1], $vs);
+            foreach ($vs[1] as $k) {
+                if ($val($k) !== '') {
+                    return $m[0];
+                }
+            }
+            return '';
+        }, (string) $tpl);
         $lines = [];
-        foreach (explode("\n", (string) $tpl) as $line) {
+        foreach (explode("\n", $tpl) as $line) {
             preg_match_all('/\{(\w+)\}/', $line, $m);
             if ($m[1]) {
                 $any = false;
@@ -129,9 +139,11 @@ class Util
             }
             $lines[] = $line;
         }
-        return preg_replace_callback('/\{(\w+)\}/', function ($m) use ($val, $html) {
+        $out = preg_replace_callback('/\{(\w+)\}/', function ($m) use ($val, $html) {
             return $html ? htmlspecialchars($val($m[1]), ENT_NOQUOTES, 'UTF-8') : $val($m[1]);
         }, implode("\n", $lines));
+        // Biến rỗng để lại khoảng trắng thừa: gộp lại, bỏ khoảng trắng trước dấu ":"
+        return preg_replace(['/[ \t]{2,}/', '/[ \t]+:/'], [' ', ':'], $out);
     }
 
     public static function randomId($len = 8)

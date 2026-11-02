@@ -54,7 +54,7 @@ Admin → tab **Cập nhật** → **Kiểm tra cập nhật** → **Cập nhậ
 
 - Tạo bot với @BotFather, dán token vào tab **Telegram**, bấm **Kiểm tra token**.
 - Thêm chat ID thủ công, hoặc người dùng tự gõ `/subscribe` (nếu bật cho phép).
-- Lệnh: `/next` (kỳ sắp mở + kế hoạch), `/last` (kết quả gần nhất), `/cau` (ảnh cầu), `/bind`, `/unbind`, `/topics`, `/subscribe`, `/unsubscribe`, `/id`, `/help`.
+- Lệnh: `/next` (kỳ sắp mở + kế hoạch), `/last` (kết quả gần nhất), `/cau` (ảnh cầu), `/bind` (game, `pp tên`, `chuỗi`), `/unbind`, `/topics`, `/subscribe`, `/unsubscribe`, `/id`, `/help`.
 - Nhóm/kênh: thêm bot vào nhóm (kênh: cấp quyền admin), gõ `/id` để lấy chat ID.
 - **Gửi theo chủ đề (topic)**: thêm bot vào nhóm và cấp quyền admin, rồi vào từng chủ đề gõ `/bind 1 phút`
   (hoặc `/bind <số>` theo danh sách mà `/bind` liệt kê). Game đó chỉ gửi vào chủ đề này. `/unbind` để bỏ, `/topics` để xem
@@ -111,13 +111,30 @@ Tab **Thành viên** trong admin: bật/tắt tự đăng ký, bắt buộc duy�
 
 Không dùng dàn kế hoạch của API. Mỗi kỳ bot tự tạo dàn cho **kỳ tiếp theo** và lưu lại (`data/predictions.php`,
 1000 kỳ/game); khi API có kết quả kỳ đó thì chấm **W** nếu số về (chữ số cuối của kết quả – Đuôi) nằm trong dàn, ngược lại **L**.
+Lịch sử số về từng kỳ lưu ở `data/digits.php` để tính các phương pháp.
 
-- Phương pháp đầu tiên: **Ngẫu nhiên** – chọn ngẫu nhiên N số khác nhau từ 0–9 (mặc định 5, dùng `random_int`).
-- Admin → Cài đặt → **Phương pháp tự dự đoán**: thêm/xoá, đặt tên, số lượng số, bật/tắt, gửi kèm tin Telegram;
-  bảng W/L 200 kỳ gần nhất theo từng game.
-- Tin kết quả Telegram có thêm dòng: `🎲 PP Ngẫu nhiên: dàn 0 2 4 8 9 → về 8 ✅ W` và dàn kỳ tiếp.
-- Trang xem cầu / tab Cầu: chọn nguồn **Dàn API** hoặc **PP …** để xem cầu W/L riêng của phương pháp
-  (link: `xemcau.php?src=random`).
+| Phương pháp | Cách chọn N số (mặc định N = 5, K = 30) |
+|---|---|
+| Ngẫu nhiên | N số ngẫu nhiên khác nhau (`random_int`) |
+| Số nóng | N số về nhiều nhất trong K kỳ gần nhất |
+| Số lạnh (gan) | N số lâu chưa về nhất |
+| Nóng + lạnh | xen kẽ số nóng và số lạnh |
+| Số về gần đây | N số khác nhau về gần nhất |
+| Theo số vừa về | số vừa về và các số kề ±1, ±2… |
+| Bóng âm dương | số vừa về + bóng dương (0↔5, 1↔6, 2↔7, 3↔8, 4↔9) + bóng âm (0↔7, 1↔4, 2↔9, 3↔6, 5↔8), thiếu thì thêm số nóng |
+
+Thiếu lịch sử thì bổ sung số ngẫu nhiên cho đủ dàn.
+
+**Phương pháp đang dùng (đồng bộ)** – Admin → Cài đặt: chọn Dàn API hoặc một phương pháp; tin kết quả Telegram (dàn + W/L +
+kế hoạch kỳ tiếp), ảnh cầu, báo chuỗi W/L, bảng kỳ thành viên và trang xem cầu đều chạy theo phương pháp đó. Từng game có thể
+chọn riêng (tab Nguồn API).
+
+**Topic riêng cho phương pháp** – gõ `/bind pp nóng` trong topic muốn nhận (hoặc nhập ô "Topic riêng" trong admin): tin cầu
+của phương pháp đó (kết quả W/L, dàn kỳ tiếp, ảnh cầu – cho mọi game) chỉ gửi vào topic này. Phương pháp chưa có topic riêng
+có thể hiện thêm dòng phụ `🎲 PP …` trong tin của topic game. Lưu ý Telegram giới hạn ~20 tin/phút mỗi nhóm – chỉ bật topic
+cho các phương pháp cần theo dõi, hoặc gửi ảnh mỗi N kỳ.
+
+Trang xem cầu / tab Cầu: chọn nguồn **Đang dùng**, **Dàn API** hoặc từng **PP …** (link: `xemcau.php?src=hot`).
 
 ## Ảnh bảng cầu trên Telegram
 

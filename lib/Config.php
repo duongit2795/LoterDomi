@@ -13,6 +13,8 @@ class Config
             'type' => 'custom',
             // Nơi nhận riêng của game ("chat_id" hoặc "chat_id:topic_id"); rỗng = gửi tới các chat chung
             'targets' => [],
+            // Phương pháp dự đoán riêng cho game: '' = theo cài đặt chung, 'api' = dàn API, hoặc id phương pháp
+            'predictMethod' => '',
             'vnlp' => [
                 'gameId' => '',
                 'play' => 'DI',
@@ -107,9 +109,9 @@ class Config
                 'requireApproval' => false,
             ],
             // Phương pháp tự dự đoán (không dùng dàn của API)
-            'methods' => [
-                ['id' => 'random', 'name' => 'Ngẫu nhiên', 'type' => 'random', 'size' => 5, 'enabled' => true, 'notify' => true],
-            ],
+            'methods' => Method::defaults(),
+            // Phương pháp đang dùng để gửi Telegram / ảnh cầu / báo chuỗi / trang cầu: '' = dàn API, hoặc id phương pháp
+            'activeMethod' => '',
             'games' => [],
         ];
     }
@@ -155,7 +157,7 @@ class Config
                 }
             }
             $cfg['games'] = array_map([self::class, 'normalizeGame'], $cfg['games'] ?: []);
-            $cfg['methods'] = array_map(['Method', 'normalize'], $cfg['methods'] ?: []);
+            $cfg['methods'] = Method::withDefaults(array_map(['Method', 'normalize'], $cfg['methods'] ?: []), $cfg['methodsAdded'] ?? []);
             self::$cache = $cfg;
         }
         return self::$cache;
@@ -166,6 +168,8 @@ class Config
         $cfg = Util::merge(self::get(true), $partial);
         if (isset($partial['methods'])) {
             $cfg['methods'] = array_map(['Method', 'normalize'], $partial['methods']);
+            // Đã lưu danh sách phương pháp: phương pháp mặc định nào bị xoá thì không tự thêm lại
+            $cfg['methodsAdded'] = array_column(Method::defaults(), 'id');
         }
         if (isset($partial['games'])) {
             $cfg['games'] = array_map([self::class, 'normalizeGame'], $partial['games']);
@@ -183,6 +187,7 @@ class Config
         $cfg = self::get(true);
         unset($cfg['admin'], $cfg['installed']);
         // Không gửi mật khẩu DB ra trình duyệt
+        $cfg['methodTypes'] = Method::TYPES;
         $cfg['db']['hasPass'] = $cfg['db']['pass'] !== '';
         $cfg['db']['pass'] = '';
         return $cfg;

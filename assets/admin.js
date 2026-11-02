@@ -91,6 +91,7 @@ function renderGames() {
         <div><label>Tên game</label><input data-f="name" value="${esc(g.name)}"></div>
         <div><label>Loại nguồn</label><select data-f="type" onchange="changeType()">${[['vnlp', 'vnlotteryplan.com (có sẵn)'], ['custom', 'API tuỳ chỉnh']].map(([t, l]) => `<option value="${t}" ${g.type === t ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       </div>
+      ${g.type === 'vnlp' ? `<label>Phương pháp gửi Telegram / ảnh cầu / báo chuỗi của game này</label><select data-f="predictMethod" style="max-width:360px">${methodOptions(g.predictMethod || '', true)}</select>` : ''}
       <label>Gửi tới (chat_id hoặc chat_id:chủ_đề_id, cách nhau bởi dấu phẩy) – để trống = gửi tới các chat chung ở tab Telegram</label>
       <input data-f="targets" value="${esc((g.targets || []).join(', '))}" placeholder="trống = chat chung · vd: -1001234567890:12">
       ${body}
@@ -246,30 +247,41 @@ async function changePassword() {
 }
 
 // ---- Phương pháp tự dự đoán ----
-const METHOD_TYPES = { random: 'Ngẫu nhiên' };
 function renderMethods() {
+  const types = cfg.methodTypes || {};
   $('methods').innerHTML = cfg.methods.map((m, i) => `<tr data-i="${i}">
     <td><input data-k="name" value="${esc(m.name)}" style="min-width:140px"></td>
-    <td><select data-k="type">${Object.entries(METHOD_TYPES).map(([v, l]) => `<option value="${v}" ${m.type === v ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
-    <td><input data-k="size" type="number" min="1" max="9" value="${m.size}" style="width:80px"></td>
+    <td><select data-k="type" title="${esc((types[m.type] || [])[1] || '')}">${Object.entries(types).map(([v, t]) => `<option value="${v}" ${m.type === v ? 'selected' : ''} title="${esc(t[1])}">${esc(t[0])}</option>`).join('')}</select>
+      <div class="muted" style="max-width:260px">${esc((types[m.type] || [])[1] || '')}</div></td>
+    <td><input data-k="size" type="number" min="1" max="9" value="${m.size}" style="width:70px"></td>
+    <td><input data-k="window" type="number" min="5" max="500" value="${m.window}" style="width:80px" title="Số kỳ gần nhất để tính số nóng"></td>
     <td><input data-k="enabled" type="checkbox" ${m.enabled ? 'checked' : ''} style="width:auto"></td>
-    <td><input data-k="notify" type="checkbox" ${m.notify ? 'checked' : ''} style="width:auto"></td>
+    <td><input data-k="targets" value="${esc((m.targets || []).join(', '))}" placeholder="trống = không có" style="min-width:170px"></td>
+    <td><input data-k="notify" type="checkbox" ${m.notify ? 'checked' : ''} style="width:auto" title="Chỉ dùng khi phương pháp chưa có topic riêng"></td>
     <td><button class="btn danger" type="button" onclick="removeMethod(${i})">Xoá</button></td>
-  </tr>`).join('') || '<tr><td colspan="6" class="muted">Chưa có phương pháp.</td></tr>';
+  </tr>`).join('') || '<tr><td colspan="8" class="muted">Chưa có phương pháp.</td></tr>';
+  $('active-method').innerHTML = methodOptions(cfg.activeMethod, false);
+}
+// Danh sách lựa chọn phương pháp (dùng cho ô chung và ô từng game)
+function methodOptions(cur, forGame) {
+  const opts = (forGame ? [['', 'Theo cài đặt chung']] : []).concat([[forGame ? 'api' : '', 'Dàn API (kế hoạch của trang nguồn)']])
+    .concat(cfg.methods.filter((m) => m.enabled && m.id).map((m) => [m.id, 'PP ' + m.name]));
+  return opts.map(([v, l]) => `<option value="${esc(v)}" ${cur === v ? 'selected' : ''}>${esc(l)}</option>`).join('');
 }
 function readMethods() {
   document.querySelectorAll('#methods tr[data-i]').forEach((tr) => {
     const m = cfg.methods[tr.dataset.i];
     tr.querySelectorAll('[data-k]').forEach((el) => {
       const k = el.dataset.k;
-      m[k] = el.type === 'checkbox' ? el.checked : k === 'size' ? +el.value : el.value.trim();
+      m[k] = el.type === 'checkbox' ? el.checked : (k === 'size' || k === 'window') ? +el.value
+        : k === 'targets' ? el.value.split(/[\s,]+/).filter(Boolean) : el.value.trim();
     });
   });
 }
-function addMethod() { readMethods(); cfg.methods.push({ id: '', name: 'Ngẫu nhiên ' + (cfg.methods.length + 1), type: 'random', size: 5, enabled: true, notify: false }); renderMethods(); }
+function addMethod() { readMethods(); cfg.methods.push({ id: '', name: 'Phương pháp ' + (cfg.methods.length + 1), type: 'random', size: 5, window: 30, enabled: true, notify: false }); renderMethods(); }
 function removeMethod(i) { if (!confirm('Xoá phương pháp này? Lịch sử dự đoán của nó vẫn giữ trong data/ nhưng không hiển thị nữa.')) return; readMethods(); cfg.methods.splice(i, 1); renderMethods(); }
 async function saveMethods() {
-  await run(null, async () => { readMethods(); cfg = await api('save', { methods: cfg.methods }); renderMethods(); loadMethodStats(); toast('Đã lưu'); });
+  await run(null, async () => { readMethods(); cfg = await api('save', { methods: cfg.methods, activeMethod: $('active-method').value }); renderMethods(); renderGames(); loadMethodStats(); toast('Đã lưu'); });
 }
 async function loadMethodStats() {
   const st = await api('methods-stats').catch(() => []);
@@ -287,6 +299,7 @@ function updatePublicLink() {
   $('pr-link').textContent = url; $('pr-open').href = url;
 }
 document.addEventListener('input', (e) => { if (e.target.id === 'pr-key') updatePublicLink(); });
+document.addEventListener('change', (e) => { if (e.target.closest && e.target.closest('#methods') && e.target.dataset.k === 'type') { readMethods(); renderMethods(); } });
 
 // ---- Thành viên ----
 const MB_STATUS = { active: ['Hoạt động', 'b-ok'], pending: ['Chờ duyệt', 'b-warn'], locked: ['Bị khoá', 'b-err'] };

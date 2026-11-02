@@ -54,7 +54,7 @@
     const nums = (g.plan || '').split(/\s+/).filter(Boolean).map((n) => `<span class="num">${esc(n)}</span>`).join('');
     const issueShort = (g.nextIssue || '').replace(/^.*-/, '');
     return `<div class="card rcard" data-id="${esc(g.id)}">
-      <div class="rcard-top"><div class="rname">${esc(g.name)}</div>${streakHtml}</div>
+      <div class="rcard-top"><div><div class="rname">${esc(g.name)}</div>${g.srcName ? `<div class="muted" style="font-size:12px">${esc(g.srcName)}</div>` : ''}</div>${streakHtml}</div>
       ${items.length ? `<div class="rbar" title="WIN ${pctW}%"><span class="bw" style="width:${pctW}%"></span><span class="bl"></span></div>
       <div class="rnums"><span class="tw">WIN <b>${wins}</b> · ${pctW}%</span><span class="tl">${100 - pctW}% · <b>${losses}</b> LOST</span></div>` : ''}
       <div class="road-wrap"><div class="road" style="grid-template-columns:repeat(${cols}, var(--cell))">${cells}</div></div>

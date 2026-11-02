@@ -2,14 +2,14 @@
 // Xử lý lệnh Telegram (getUpdates, không cần webhook/SSL)
 class Bot
 {
-    const HELP = "<b>LoterDomi bot</b>\n/next – các kỳ sắp mở + kế hoạch\n/last – kết quả kỳ gần nhất\n/bind tên game – gửi game đó vào chủ đề/chat này (admin nhóm)\n/bind chuỗi – nhận báo chuỗi thắng/thua liên tiếp tại chủ đề này\n/unbind – bỏ gán các game khỏi chủ đề này\n/cau [tên game] – ảnh bảng cầu W/L\n/topics – xem game nào gửi đi đâu\n/subscribe – nhận thông báo tại chat này\n/unsubscribe – huỷ nhận thông báo\n/id – xem chat id, chủ đề id";
+    const HELP = "<b>LoterDomi bot</b>\n/next – các kỳ sắp mở + kế hoạch\n/last – kết quả kỳ gần nhất\n/bind tên game – gửi game đó vào chủ đề/chat này (admin nhóm)\n/bind pp tên – topic riêng cho phương pháp (vd /bind pp nóng)\n/bind chuỗi – nhận báo chuỗi thắng/thua liên tiếp tại chủ đề này\n/unbind – bỏ gán các game khỏi chủ đề này\n/cau [tên game] – ảnh bảng cầu W/L\n/topics – xem game nào gửi đi đâu\n/subscribe – nhận thông báo tại chat này\n/unsubscribe – huỷ nhận thông báo\n/id – xem chat id, chủ đề id";
 
     public static function nextText(array $states)
     {
         $tz = Config::get()['timezone'];
         $lines = [];
         foreach (Monitor::activeGames() as $g) {
-            $s = isset($states[$g['id']]) ? $states[$g['id']] : [];
+            $s = Method::view($g, isset($states[$g['id']]) ? $states[$g['id']] : []);
             $name = Util::h($g['name']);
             if (empty($s['nextIssue'])) {
                 $lines[] = "• <b>$name</b>: chưa có dữ liệu";
@@ -31,7 +31,7 @@ class Bot
     {
         $lines = [];
         foreach (Monitor::activeGames() as $g) {
-            $s = isset($states[$g['id']]) ? $states[$g['id']] : [];
+            $s = Method::view($g, isset($states[$g['id']]) ? $states[$g['id']] : []);
             $name = Util::h($g['name']);
             if (empty($s['issue'])) {
                 $lines[] = "• <b>$name</b>: chưa có dữ liệu";
@@ -128,6 +128,17 @@ class Bot
         return implode("\n", $lines);
     }
 
+    private static function methodTopicsText(array $cfg)
+    {
+        $lines = [];
+        foreach ($cfg['methods'] as $m) {
+            if ($m['enabled'] && $m['targets']) {
+                $lines[] = '🎲 PP ' . Util::h($m['name']) . ' → <code>' . Util::h(implode(', ', $m['targets'])) . '</code>';
+            }
+        }
+        return $lines ? "\n\n" . implode("\n", $lines) : '';
+    }
+
     private static function handle(array $msg, Monitor $monitor)
     {
         $parts = preg_split('/\s+/', trim($msg['text']), 2);
@@ -171,7 +182,10 @@ class Bot
                     return $reply('Server chưa bật PHP GD/FreeType nên không vẽ được ảnh cầu.');
                 }
                 foreach ($found as $g) {
-                    $png = (new RoadImage())->render($g['name'], Road::get($g['id'], RoadImage::WINDOW), $states[$g['id']] ?? []);
+                    $v = Method::view($g, $states[$g['id']] ?? []);
+                    $png = !empty($v['method'])
+                        ? (new RoadImage())->render($g['name'] . ' · ' . $v['play'], Method::road($v['method'], $g['id'], RoadImage::WINDOW), $v)
+                        : (new RoadImage())->render($g['name'], Road::get($g['id'], RoadImage::WINDOW), $v);
                     $file = tempnam(sys_get_temp_dir(), 'cau') . '.png';
                     file_put_contents($file, $png);
                     try {
@@ -184,6 +198,7 @@ class Bot
             case '/topics':
                 $st = $cfg['monitor']['streak'];
                 return $reply("📌 <b>Nơi gửi của từng game</b>\n" . (self::gameList($cfg['games']) ?: 'Chưa có game.')
+                    . self::methodTopicsText($cfg)
                     . "\n\n🔥 <b>Báo chuỗi</b> (W ≥ {$st['winMin']} kỳ, L ≥ {$st['loseMin']} kỳ) → <code>" . Util::h($st['targets'] ? implode(', ', $st['targets']) : 'chưa gán') . '</code>');
             case '/bind':
             case '/unbind':
@@ -200,13 +215,42 @@ class Bot
                         }
                     }
                     unset($g);
+                    $methods = $cfg['methods'];
+                    foreach ($methods as &$mm) {
+                        if (in_array($here, $mm['targets'], true)) {
+                            $mm['targets'] = array_values(array_diff($mm['targets'], [$here]));
+                            $names[] = 'PP ' . $mm['name'];
+                        }
+                    }
+                    unset($mm);
                     $streakTargets = $cfg['monitor']['streak']['targets'];
                     if (in_array($here, $streakTargets, true)) {
                         $names[] = 'báo chuỗi';
                     }
-                    Config::update(['games' => $games, 'monitor' => ['streak' => ['targets' => array_values(array_diff($streakTargets, [$here]))]]]);
+                    Config::update(['games' => $games, 'methods' => $methods, 'monitor' => ['streak' => ['targets' => array_values(array_diff($streakTargets, [$here]))]]]);
                     Logger::info("Bỏ gán $here khỏi: " . implode(', ', $names));
                     return $reply($names ? 'Đã bỏ gán: ' . Util::h(implode(', ', $names)) : 'Chủ đề này chưa gán game nào.');
+                }
+                // /bind pp <tên phương pháp>: topic riêng cho phương pháp
+                if (preg_match('/^(pp|phương pháp|phuong phap)\s+(.+)$/iu', $arg, $pm)) {
+                    $found = Method::search($pm[2]);
+                    $list = implode(', ', array_map(function ($m) {
+                        return $m['name'];
+                    }, $cfg['methods']));
+                    if (count($found) !== 1) {
+                        return $reply(($found ? 'Có nhiều phương pháp khớp' : 'Không tìm thấy phương pháp') . ". Các phương pháp: " . Util::h($list));
+                    }
+                    $methods = $cfg['methods'];
+                    foreach ($methods as &$mm) {
+                        if ($mm['id'] === $found[0]['id'] && !in_array($here, $mm['targets'], true)) {
+                            $mm['targets'][] = $here;
+                            $mm['enabled'] = true;
+                        }
+                    }
+                    unset($mm);
+                    Config::update(['methods' => $methods]);
+                    Logger::info("Gán PP {$found[0]['name']} → $here");
+                    return $reply('✅ Tin cầu của <b>PP ' . Util::h($found[0]['name']) . '</b> (mọi game) sẽ chỉ gửi vào ' . ($thread ? 'chủ đề này' : 'chat này') . " (<code>$here</code>).");
                 }
                 if (in_array(mb_strtolower($arg), ['chuỗi', 'chuoi', 'streak'], true)) {
                     $targets = $cfg['monitor']['streak']['targets'];

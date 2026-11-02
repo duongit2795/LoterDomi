@@ -35,7 +35,7 @@ $games = $allowed ? Monitor::activeGames() : [];
 $qs = function (array $extra) use ($key, $gameId, $src) {
     return '?' . http_build_query(array_filter($extra + ['k' => $key, 'game' => $gameId, 'src' => $src], 'strlen'));
 };
-$sources = [['id' => '', 'name' => 'Dàn API']];
+$sources = [['id' => '', 'name' => 'Đang dùng'], ['id' => 'api', 'name' => 'Dàn API']];
 foreach ($allowed ? Method::enabled() : [] as $m) {
     $sources[] = ['id' => $m['id'], 'name' => 'PP ' . $m['name']];
 }
